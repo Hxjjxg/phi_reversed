@@ -3379,6 +3379,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     var pinnedGcHandles = [];
     var unityObjectClassCache = null;
     var unityObjectImplicitMethodCache = null;
+    var forcedSeparateTailRebuildCount = 0;
     function isEngineAliveUnityObject(obj) {
       try {
         if (!unityObjectClassCache) {
@@ -3434,6 +3435,23 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         pinnedSpriteHandles.add(key);
       } catch (e) {
         console.log(`[note-texture] GCHandle pin failed (${tag}): ${e}`);
+      }
+    }
+    function fileSignature(path) {
+      try {
+        const bytes = readLocalBytes(path);
+        const len = bytes.length;
+        if (len === 0) {
+          return "0:0";
+        }
+        let acc = 0;
+        const step = Math.max(1, Math.floor(len / 64));
+        for (let i = 0; i < len; i += step) {
+          acc = acc + bytes[i] >>> 0;
+        }
+        return `${len}:${acc.toString(16)}`;
+      } catch (e) {
+        return `err:${e}`;
       }
     }
     function resolveClass(fullName, preferredAssemblies = []) {
@@ -3747,6 +3765,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       let forcedTailNullWarnCount = 0;
       let tailSetSpriteTraceCount = 0;
       let inForceTailRendererDepth = 0;
+      let tailIdentityLogged = false;
       const installedCaves = [];
       const spritePtrSlot = Memory.alloc(8);
       spritePtrSlot.writePointer(ptr(0));
@@ -3761,6 +3780,29 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         }
         pinManagedObject(loadedSprites.normal.holdEnd, "normal:holdEnd");
         pinManagedObject(loadedSprites.multi.holdEnd, "multi:holdEnd");
+        if (!tailIdentityLogged) {
+          tailIdentityLogged = true;
+          const n = loadedSprites.normal.holdEnd;
+          const m = loadedSprites.multi.holdEnd;
+          const sameTailHandle = sameObject(n, m);
+          const sigNormal = fileSignature(NOTE_TEXTURES.normal.holdEnd);
+          const sigMulti = fileSignature(NOTE_TEXTURES.multi.holdEnd);
+          console.log(`[note-texture] tail identity normal=${n?.handle} multi=${m?.handle} same=${sameTailHandle} fileSig(normal=${sigNormal}, multi=${sigMulti})`);
+          if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && sameTailHandle && forcedSeparateTailRebuildCount < 2) {
+            forcedSeparateTailRebuildCount++;
+            try {
+              const rebuilt = createCustomSprite(NOTE_TEXTURES.multi.holdEnd, loadedSprites.normal.holdEnd);
+              loadedSprites.multi.holdEnd = rebuilt;
+              pinManagedObject(rebuilt, "multi:holdEnd:forced-rebuild");
+              if (isLiveUnityObject(rebuilt)) {
+                spritePtrSlot.writePointer(rebuilt.handle);
+              }
+              console.log(`[note-texture] forced rebuild separate tail normal=${loadedSprites.normal.holdEnd?.handle} multi=${loadedSprites.multi.holdEnd?.handle}`);
+            } catch (e) {
+              console.log(`[note-texture] forced rebuild separate tail failed: ${e}`);
+            }
+          }
+        }
         return loadedSprites;
       };
       const ensureLiveSeparateTailSprite = () => {
@@ -3870,7 +3912,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         if (!processedHolds.has(key)) {
           processedHolds.add(key);
           fallbackPatchedCount++;
-          if (fallbackPatchedCount <= 12) {
+          if (fallbackPatchedCount <= 100) {
             const lenAfter = instance.field("noteImages").value?.length;
             console.log(`[note-texture] fallback patched multi hold tail (#${fallbackPatchedCount}, len=${lenAfter})`);
           }
@@ -3880,7 +3922,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       const forceTailRenderer = (instance, tailSprite) => {
         let forced = false;
         if (!isLiveUnityObject(tailSprite)) {
-          if (forcedTailNullWarnCount < 12) {
+          if (forcedTailNullWarnCount < 100) {
             forcedTailNullWarnCount++;
             console.log(`[note-texture] forceTailRenderer skipped dead tail sprite: handle=${tailSprite?.handle}`);
           }
@@ -3922,7 +3964,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         if (forced && key && !forceLoggedHolds.has(key)) {
           forceLoggedHolds.add(key);
           fallbackForcedCount++;
-          if (fallbackForcedCount <= 12) {
+          if (fallbackForcedCount <= 100) {
             try {
               const tailRenderer = instance.field("_holdEndSpriteRenderer1").value;
               const current = tailRenderer?.method("get_sprite").overload().invoke();
