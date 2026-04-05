@@ -1,0 +1,19 @@
+{
+    "redirects": {
+        "b92170f64eea2ac82ecccd6ea00aac76.bundle": {
+            "type": "remote",
+            "target": "http://39.107.95.178:8080/credit_testflick.bundle",
+            "enabled": true
+        },
+        "692d8e0275ad550e84a71b28e844474f.bundle": {
+            "type": "remote",
+            "target": "http://39.107.95.178:8080/692d8e0275ad550e84a71b28e844474f.bundle",
+            "enabled": true
+        },
+        "69815dbc75f9770c399f94e34e4c5796.bundle": {
+            "type": "remote",
+            "target": "http://39.107.95.178:8080/g.bundle",
+            "enabled": true
+        }
+    }
+}

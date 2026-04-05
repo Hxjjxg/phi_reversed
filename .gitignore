@@ -1,0 +1,23 @@
+# Node.js
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+
+# 本地配置
+.ida-mcp/
+.claude/
+.specstory/
+
+# 工具/外部依赖
+Files_il2cppdumper/
+il2cpp_bridge_sourcecode_and_wiki/
+binary_file_and_exported_symbols/
+
+# 运行时生成
+chart/*.json
+
+# 临时文件
+scripts/note_texture_hook/.tmp_*.js

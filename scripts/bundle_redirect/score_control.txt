@@ -1,0 +1,134 @@
+void __fastcall ScoreControl__Update(ScoreControl_o *this, const MethodInfo *method)
+{
+  ScoreControl_o *this_1; // x19
+  struct LevelInformation_o *levelInformation; // x8
+  struct LevelInformation_o *levelInformation_1; // x8
+  float scoreOfNote; // s0
+  int combo; // w8
+  float _percent; // s0
+  float numOfNotes; // s0
+  float scoreOfNote_1; // s2
+  int maxcombo; // w9
+  __int64 (*methodPtr)(void); // x9
+  struct UnityEngine_UI_Text_o *combo_1; // x20
+  float n999999_1; // s0
+  int n999999; // w8
+  struct UnityEngine_UI_Text_o *score; // x20
+  ScoreControl_o *this_2; // x1
+  System_String_o *str1; // x0
+  struct LevelInformation_o *levelInformation_2; // x8
+  int n999999_2; // [xsp+Ch] [xbp-14h] BYREF
+
+  this_1 = this;
+  if ( (byte_3D1D638 & 1) == 0 )
+  {
+    this = (ScoreControl_o *)sub_DCB498(40853);
+    byte_3D1D638 = 1;
+  }
+  n999999_2 = 0;
+  levelInformation = this_1->fields.levelInformation;
+  if ( !levelInformation )
+    goto LABEL_35;
+  if ( !levelInformation->fields.chartLoaded )
+    return;
+  this = (ScoreControl_o *)JudgeControl_TypeInfo;
+  if ( (*(_WORD *)&JudgeControl_TypeInfo->_2.bitflags1 & 0x200) != 0 && !JudgeControl_TypeInfo->_2.cctor_finished )
+  {
+    j__il2cpp_runtime_class_init_0(JudgeControl_TypeInfo, method);
+    this = (ScoreControl_o *)JudgeControl_TypeInfo;
+  }
+  levelInformation_1 = this_1->fields.levelInformation;
+  if ( **((_BYTE **)this + 23) == 1 )
+  {
+    if ( !levelInformation_1 )
+      goto LABEL_35;
+    scoreOfNote = (float)((float)((float)((float)this_1->fields.good * 0.65) + (float)this_1->fields.perfect)
+                        / (float)levelInformation_1->fields.numOfNotes)
+                * 1000000.0;
+    this_1->fields.scoreOfNote = scoreOfNote;
+    combo = this_1->fields._combo;
+    if ( combo > this_1->fields.maxcombo )
+      this_1->fields.maxcombo = combo;
+    this_1->fields._score = scoreOfNote;
+    _percent = scoreOfNote / 10000.0;
+  }
+  else
+  {
+    if ( !levelInformation_1 )
+      goto LABEL_35;
+    numOfNotes = (float)levelInformation_1->fields.numOfNotes;
+    scoreOfNote_1 = (float)((float)((float)((float)this_1->fields.good * 0.65) + (float)this_1->fields.perfect)
+                          / numOfNotes)
+                  * 900000.0;
+    this_1->fields.scoreOfNote = scoreOfNote_1;
+    combo = this_1->fields._combo;
+    maxcombo = this_1->fields.maxcombo;
+    if ( combo > maxcombo )
+    {
+      this_1->fields.maxcombo = combo;
+      maxcombo = combo;
+    }
+    this_1->fields._score = scoreOfNote_1 + (float)((float)((float)maxcombo * 100000.0) / numOfNotes);
+    _percent = (float)(scoreOfNote_1 / 900000.0) * 100.0;
+  }
+  this_1->fields._percent = _percent;
+  this = (ScoreControl_o *)this_1->fields.comboText;
+  if ( combo >= 3 )
+  {
+    if ( !this )
+      goto LABEL_35;
+    ((void (__fastcall *)(ScoreControl_o *, __int64, _QWORD))this->klass[4]._1.byval_arg.data)(
+      this,
+      StringLiteral_12321,
+      *(_QWORD *)&this->klass[4]._1.byval_arg.bits);
+    combo_1 = this_1->fields.combo;
+    this = (ScoreControl_o *)System_Int32__ToString((int)this_1 + 68, 0);
+    if ( !combo_1 )
+      goto LABEL_35;
+    methodPtr = (__int64 (*)(void))combo_1->klass->vtable._75_set_text.methodPtr;
+  }
+  else
+  {
+    if ( !this )
+      goto LABEL_35;
+    ((void (__fastcall *)(ScoreControl_o *, __int64, _QWORD))this->klass[4]._1.byval_arg.data)(
+      this,
+      StringLiteral_73,
+      *(_QWORD *)&this->klass[4]._1.byval_arg.bits);
+    this = (ScoreControl_o *)this_1->fields.combo;
+    if ( !this )
+      goto LABEL_35;
+    methodPtr = (__int64 (*)(void))this->klass[4]._1.byval_arg.data;
+  }
+  this = (ScoreControl_o *)methodPtr();
+  n999999_1 = this_1->fields._score + 0.5;
+  n999999 = (int)n999999_1;
+  if ( n999999_1 == INFINITY )
+    n999999 = 0;
+  score = this_1->fields.score;
+  if ( n999999 <= 999999 )
+  {
+    n999999_2 = n999999;
+    str1 = System_Int32__ToString_48288064((int32_t)&n999999_2, (System_String_o *)StringLiteral_12322, 0);
+    this = (ScoreControl_o *)System_String__Concat_47122092((System_String_o *)StringLiteral_71, str1, 0);
+    if ( !score )
+      goto LABEL_35;
+    this_2 = this;
+  }
+  else
+  {
+    if ( !score )
+      goto LABEL_35;
+    this_2 = (ScoreControl_o *)StringLiteral_11505;
+  }
+  this = (ScoreControl_o *)((__int64 (__fastcall *)(struct UnityEngine_UI_Text_o *, ScoreControl_o *, const MethodInfo *))score->klass->vtable._75_set_text.methodPtr)(
+                             score,
+                             this_2,
+                             score->klass->vtable._75_set_text.method);
+  levelInformation_2 = this_1->fields.levelInformation;
+  if ( !levelInformation_2 )
+LABEL_35:
+    sub_DCB564(this, method);
+  if ( levelInformation_2->fields.noteScale != 0.0 && this_1->fields.noteScale == 0.0 )
+    this_1->fields.noteScale = levelInformation_2->fields.scale;
+}
