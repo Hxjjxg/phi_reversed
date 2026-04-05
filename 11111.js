@@ -3351,6 +3351,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     var HOLD_TAIL_MODE_NONE = 1;
     var HOLD_TAIL_MODE_SHARED = 2;
     var HOLD_TAIL_MODE_SEPARATE = 3;
+    var ENABLE_NATIVE_CODE_CAVE = false;
     var ARM64_B_MIN = -0x08000000n;
     var ARM64_B_MAX = 0x07fffffcn;
     var HOLD_TAIL_MODE = HOLD_TAIL_MODE_SEPARATE;
@@ -3643,6 +3644,15 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       }
     }
     Il2Cpp.perform(() => {
+      Process.setExceptionHandler((details) => {
+        try {
+          const pc = details?.context?.pc;
+          const lr = details?.context?.lr;
+          console.log(`[note-texture] native exception: type=${details?.type} address=${details?.address} pc=${pc} lr=${lr}`);
+        } catch {
+        }
+        return false;
+      });
       const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
       const LevelControl = AssemblyCSharp.class("LevelControl");
       const ClickControl = AssemblyCSharp.class("ClickControl");
@@ -3651,6 +3661,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       const HoldControl = AssemblyCSharp.class("HoldControl");
       const UiChange = AssemblyCSharp.tryClass("UiChange");
       let loadedSprites = null;
+      const processedHolds = /* @__PURE__ */ new Set();
       const installedCaves = [];
       const spritePtrSlot = Memory.alloc(8);
       spritePtrSlot.writePointer(ptr(0));
@@ -3665,6 +3676,76 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         }
         return loadedSprites;
       };
+      const sameObject = (a, b) => {
+        if (!a || !b) {
+          return false;
+        }
+        const ah = a.handle ?? a;
+        const bh = b.handle ?? b;
+        if (!ah || !bh) {
+          return false;
+        }
+        try {
+          if (typeof ah.equals === "function") {
+            return ah.equals(bh);
+          }
+        } catch {
+        }
+        try {
+          return ah.toString() === bh.toString();
+        } catch {
+          return false;
+        }
+      };
+      const syncMultiTailBeforeNoteMove = (instance) => {
+        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE || !loadedSprites) {
+          return;
+        }
+        const key = instance.handle?.toString?.();
+        if (!key || processedHolds.has(key)) {
+          return;
+        }
+        const noteImages = instance.field("noteImages").value;
+        if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
+          processedHolds.add(key);
+          return;
+        }
+        const judgeLine = instance.field("judgeLine").value;
+        if (!judgeLine || judgeLine.isNull?.()) {
+          return;
+        }
+        const holdHL0 = judgeLine.field("HoldHL0").value;
+        const holdHL1 = judgeLine.field("HoldHL1").value;
+        const isMulti = noteImages.length > 0 && sameObject(noteImages.get(0), holdHL0) || noteImages.length > 1 && sameObject(noteImages.get(1), holdHL1);
+        if (!isMulti) {
+          processedHolds.add(key);
+          return;
+        }
+        const targetTail = loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
+        if (targetTail) {
+          noteImages.set(2, targetTail);
+          instance.field("noteImages").value = noteImages;
+        }
+        try {
+          const tailGo = instance.field("holdEnd").value;
+          if (tailGo && !tailGo.isNull?.()) {
+            tailGo.method("SetActive").overload("System.Boolean").invoke(true);
+          }
+        } catch {
+        }
+        processedHolds.add(key);
+      };
+      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        HoldControl.method("NoteMove", 0).implementation = function() {
+          try {
+            syncMultiTailBeforeNoteMove(this);
+          } catch (e) {
+            console.log(`[note-texture] fallback multi tail sync failed: ${e}`);
+          }
+          this.method("NoteMove").invoke();
+        };
+        console.log("[note-texture] fallback enabled: HoldControl.NoteMove pre-sync for multi hold tail");
+      }
       function installHoldEndCave(hookRva, noteImagesReg, returnRva) {
         const base = Il2Cpp.module.base;
         const hookAddr = base.add(hookRva);
@@ -3694,8 +3775,8 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         }
         const w = new Arm64Writer(cave, { pc: cave });
         w.putBytes(originalBytes);
-        w.putCmpRegImm("x8", 2);
-        w.putBCondLabel("ls", "skip");
+        w.putBytes([31, 9, 0, 113]);
+        w.putBytes([169, 0, 0, 84]);
         w.putLdrRegAddress("x8", spritePtrSlot);
         w.putLdrRegRegOffset("x8", "x8", 0);
         w.putCbzRegLabel("x8", "skip");
@@ -3712,7 +3793,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         console.log(`[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} \u2192 ${cave} (reg=${noteImagesReg})`);
         installedCaves.push(cave);
       }
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && ENABLE_NATIVE_CODE_CAVE) {
         let caveInstallFailed = false;
         try {
           installHoldEndCave(37321656, "x22", 37321660);
@@ -3729,10 +3810,13 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         if (!caveInstallFailed) {
           console.log("[note-texture] code caves installed for multi hold tail (SEPARATE mode)");
         }
+      } else if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        console.log("[note-texture] native code cave disabled; using managed fallback path");
       }
       LevelControl.method("Awake", 0).implementation = function() {
         this.method("Awake").invoke();
         try {
+          processedHolds.clear();
           const sprites = ensureLoadedSprites(this);
           applyToLevelControl(this, sprites, ClickControl, DragControl, FlickControl, HoldControl);
           console.log("[note-texture] reapplied textures at LevelControl.Awake");

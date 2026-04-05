@@ -32,6 +32,11 @@ const HOLD_TAIL_MODE_NONE: HoldTailMode = 1;
 const HOLD_TAIL_MODE_SHARED: HoldTailMode = 2;
 const HOLD_TAIL_MODE_SEPARATE: HoldTailMode = 3;
 
+// Native code caves are unstable on some devices because anonymous pages may
+// not be executable under current SELinux policy. Keep disabled by default and
+// use managed fallback hook instead.
+const ENABLE_NATIVE_CODE_CAVE = false;
+
 const ARM64_B_MIN = -0x08000000n;
 const ARM64_B_MAX = 0x07fffffcn;
 
@@ -416,6 +421,20 @@ function allocCaveNear(hookAddr: NativePointer): NativePointer {
 }
 
 Il2Cpp.perform(() => {
+    Process.setExceptionHandler((details: any) => {
+        try {
+            const pc = details?.context?.pc;
+            const lr = details?.context?.lr;
+            console.log(
+                `[note-texture] native exception: type=${details?.type} address=${details?.address} pc=${pc} lr=${lr}`
+            );
+        } catch {
+        }
+
+        // Keep default crash behavior so we can still observe real stability.
+        return false;
+    });
+
     const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
     const LevelControl = AssemblyCSharp.class("LevelControl");
     const ClickControl = AssemblyCSharp.class("ClickControl");
@@ -425,6 +444,7 @@ Il2Cpp.perform(() => {
     const UiChange = AssemblyCSharp.tryClass("UiChange");
 
     let loadedSprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } | null = null;
+    const processedHolds = new Set<string>();
 
     // Keep cave pointers alive for the script lifetime.
     // Without strong references, Frida may recycle these allocations.
@@ -451,6 +471,95 @@ Il2Cpp.perform(() => {
 
         return loadedSprites;
     };
+
+    const sameObject = (a: any, b: any): boolean => {
+        if (!a || !b) {
+            return false;
+        }
+
+        const ah = a.handle ?? a;
+        const bh = b.handle ?? b;
+        if (!ah || !bh) {
+            return false;
+        }
+
+        try {
+            if (typeof ah.equals === "function") {
+                return ah.equals(bh);
+            }
+        } catch {
+        }
+
+        try {
+            return ah.toString() === bh.toString();
+        } catch {
+            return false;
+        }
+    };
+
+    const syncMultiTailBeforeNoteMove = (instance: any): void => {
+        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE || !loadedSprites) {
+            return;
+        }
+
+        const key = instance.handle?.toString?.();
+        if (!key || processedHolds.has(key)) {
+            return;
+        }
+
+        const noteImages = instance.field("noteImages").value;
+        if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
+            processedHolds.add(key);
+            return;
+        }
+
+        const judgeLine = instance.field("judgeLine").value;
+        if (!judgeLine || judgeLine.isNull?.()) {
+            return;
+        }
+
+        const holdHL0 = judgeLine.field("HoldHL0").value;
+        const holdHL1 = judgeLine.field("HoldHL1").value;
+
+        const isMulti =
+            (noteImages.length > 0 && sameObject(noteImages.get(0), holdHL0)) ||
+            (noteImages.length > 1 && sameObject(noteImages.get(1), holdHL1));
+
+        if (!isMulti) {
+            processedHolds.add(key);
+            return;
+        }
+
+        const targetTail = loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
+        if (targetTail) {
+            noteImages.set(2, targetTail);
+            instance.field("noteImages").value = noteImages;
+        }
+
+        try {
+            const tailGo = instance.field("holdEnd").value;
+            if (tailGo && !tailGo.isNull?.()) {
+                tailGo.method("SetActive").overload("System.Boolean").invoke(true);
+            }
+        } catch {
+        }
+
+        processedHolds.add(key);
+    };
+
+    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        HoldControl.method("NoteMove", 0).implementation = function (this: any): void {
+            try {
+                syncMultiTailBeforeNoteMove(this);
+            } catch (e) {
+                console.log(`[note-texture] fallback multi tail sync failed: ${e}`);
+            }
+
+            this.method("NoteMove").invoke();
+        };
+
+        console.log("[note-texture] fallback enabled: HoldControl.NoteMove pre-sync for multi hold tail");
+    }
 
     // ---------- Inline hooks (code-cave style) ----------
     //
@@ -525,10 +634,11 @@ Il2Cpp.perform(() => {
         w.putBytes(originalBytes);
 
         // 1.5 Guard: only write noteImages[2] when array length > 2.
-        // At hook sites, X8 still carries the array length that was compared
-        // by the original code (CMP W8, #1 / B.LS ...).
-        (w as any).putCmpRegImm("x8", 2);
-        (w as any).putBCondLabel("ls", "skip");
+        // Use raw encodings for compatibility with older Arm64Writer APIs:
+        //   CMP W8, #2           => 1f 09 00 71
+        //   B.LS +0x14 (to skip) => a9 00 00 54
+        w.putBytes([0x1f, 0x09, 0x00, 0x71]);
+        w.putBytes([0xa9, 0x00, 0x00, 0x54]);
 
         // 2. Load sprite pointer: X8 = *spritePtrSlot
         //    (Arm64Writer emits LDR X8, [PC, #literal] with the address in a
@@ -565,7 +675,7 @@ Il2Cpp.perform(() => {
         installedCaves.push(cave);
     }
 
-    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && ENABLE_NATIVE_CODE_CAVE) {
         let caveInstallFailed = false;
 
         try {
@@ -587,12 +697,15 @@ Il2Cpp.perform(() => {
         if (!caveInstallFailed) {
             console.log("[note-texture] code caves installed for multi hold tail (SEPARATE mode)");
         }
+    } else if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        console.log("[note-texture] native code cave disabled; using managed fallback path");
     }
 
     LevelControl.method("Awake", 0).implementation = function (this: any): void {
         this.method("Awake").invoke();
 
         try {
+            processedHolds.clear();
             const sprites = ensureLoadedSprites(this);
             applyToLevelControl(this, sprites, ClickControl, DragControl, FlickControl, HoldControl);
             console.log("[note-texture] reapplied textures at LevelControl.Awake");
