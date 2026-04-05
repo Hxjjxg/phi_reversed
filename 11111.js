@@ -1,6 +1,3 @@
-📦
-156289 /scripts/note_texture_hook/note_texture_replace_bridge_changed.js
-✄
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3654,6 +3651,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       const HoldControl = AssemblyCSharp.class("HoldControl");
       const UiChange = AssemblyCSharp.tryClass("UiChange");
       let loadedSprites = null;
+      const installedCaves = [];
       const spritePtrSlot = Memory.alloc(8);
       spritePtrSlot.writePointer(ptr(0));
       const ensureLoadedSprites = (levelControl) => {
@@ -3672,7 +3670,22 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         const hookAddr = base.add(hookRva);
         const returnAddr = base.add(returnRva);
         const originalBytes = hookAddr.readByteArray(4);
-        const cave = allocCaveNear(hookAddr);
+        let cave = allocCaveNear(hookAddr);
+        if (installedCaves.some((p) => p.equals(cave))) {
+          console.log(`[note-texture] cave address reused (${cave}), retrying allocation`);
+          let retry = null;
+          for (let i = 0; i < 4; i++) {
+            const candidate = Memory.alloc(Process.pageSize);
+            if (!installedCaves.some((p) => p.equals(candidate))) {
+              retry = candidate;
+              break;
+            }
+          }
+          if (!retry) {
+            throw new Error(`unable to allocate unique cave address (current=${cave})`);
+          }
+          cave = retry;
+        }
         if (!isArm64BReachable(hookAddr, cave)) {
           throw new Error(`hook->cave branch out of range (hook=${hookAddr}, cave=${cave})`);
         }
@@ -3695,6 +3708,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
           p.flush();
         });
         console.log(`[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} \u2192 ${cave} (reg=${noteImagesReg})`);
+        installedCaves.push(cave);
       }
       if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
         let caveInstallFailed = false;
@@ -3744,4 +3758,4 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     });
   }
 });
-export default require_note_texture_replace_bridge_changed();
+require_note_texture_replace_bridge_changed();

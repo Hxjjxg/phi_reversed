@@ -426,6 +426,10 @@ Il2Cpp.perform(() => {
 
     let loadedSprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } | null = null;
 
+    // Keep cave pointers alive for the script lifetime.
+    // Without strong references, Frida may recycle these allocations.
+    const installedCaves: NativePointer[] = [];
+
     // Shared storage for the multi.holdEnd sprite pointer.
     // The code caves read from this address at runtime.
     // Initialized to NULL; updated when sprites load in LevelControl.Awake.
@@ -481,8 +485,27 @@ Il2Cpp.perform(() => {
         // Read the original 4-byte instruction before we overwrite it
         const originalBytes = hookAddr.readByteArray(4)!;
 
-        // Allocate code cave
-        const cave = allocCaveNear(hookAddr);
+        // Allocate code cave and guarantee unique address per hook.
+        let cave = allocCaveNear(hookAddr);
+
+        if (installedCaves.some((p) => p.equals(cave))) {
+            console.log(`[note-texture] cave address reused (${cave}), retrying allocation`);
+
+            let retry: NativePointer | null = null;
+            for (let i = 0; i < 4; i++) {
+                const candidate = Memory.alloc(Process.pageSize);
+                if (!installedCaves.some((p) => p.equals(candidate))) {
+                    retry = candidate;
+                    break;
+                }
+            }
+
+            if (!retry) {
+                throw new Error(`unable to allocate unique cave address (current=${cave})`);
+            }
+
+            cave = retry;
+        }
 
         if (!isArm64BReachable(hookAddr, cave)) {
             throw new Error(
@@ -532,6 +555,8 @@ Il2Cpp.perform(() => {
         console.log(
             `[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} → ${cave} (reg=${noteImagesReg})`
         );
+
+        installedCaves.push(cave);
     }
 
     if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
