@@ -1,6 +1,12 @@
 import "frida-il2cpp-bridge";
 
 declare const Il2Cpp: any;
+declare const Process: any;
+declare const Memory: any;
+declare const Arm64Writer: any;
+declare const ptr: any;
+
+type NativePointer = any;
 
 type NoteSpritePathSet = {
     click: string;
@@ -26,10 +32,13 @@ const HOLD_TAIL_MODE_NONE: HoldTailMode = 1;
 const HOLD_TAIL_MODE_SHARED: HoldTailMode = 2;
 const HOLD_TAIL_MODE_SEPARATE: HoldTailMode = 3;
 
+const ARM64_B_MIN = -0x08000000n;
+const ARM64_B_MAX = 0x07fffffcn;
+
 // 1: do not use hold tail
 // 2: normal/multi share hold_end.png
 // 3: normal/multi use different hold tail sprites
-let HOLD_TAIL_MODE: HoldTailMode = HOLD_TAIL_MODE_NONE;
+let HOLD_TAIL_MODE: HoldTailMode = HOLD_TAIL_MODE_SEPARATE;
 
 const NOTE_TEXTURES: { normal: NoteSpritePathSet; multi: NoteSpritePathSet } = {
     normal: {
@@ -52,7 +61,6 @@ const NOTE_TEXTURES: { normal: NoteSpritePathSet; multi: NoteSpritePathSet } = {
 
 const FridaFile = (globalThis as any).File;
 const spriteCache = new Map<string, any>();
-const processedHolds = new Set<string>();
 
 function resolveClass(fullName: string, preferredAssemblies: string[] = []): any {
     for (const asmName of preferredAssemblies) {
@@ -220,25 +228,6 @@ function getComponent(gameObject: any, componentClass: any): any {
     return component;
 }
 
-function sameObject(a: any, b: any): boolean {
-    if (!a || !b) {
-        return false;
-    }
-
-    const aHandle = a.handle ?? a;
-    const bHandle = b.handle ?? b;
-
-    if (!aHandle || !bHandle) {
-        return false;
-    }
-
-    if (typeof aHandle.equals === "function") {
-        return aHandle.equals(bHandle);
-    }
-
-    return aHandle.toString() === bHandle.toString();
-}
-
 function replacePrefabNoteImage(gameObject: any, componentClass: any, sprite: any): void {
     const component = getComponent(gameObject, componentClass);
     component.field("noteImage").value = sprite;
@@ -376,59 +365,6 @@ function resolveTailModeSprites(templates: { normal: LoadedNoteSpriteSet; multi:
     return { normal, multi };
 }
 
-function syncMultiHoldTailOnce(instance: any, sprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet }): void {
-    const key = instance.handle?.toString?.() ?? "";
-    if (!key || processedHolds.has(key)) {
-        return;
-    }
-
-    const noteImages = instance.field("noteImages").value;
-    if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
-        return;
-    }
-
-    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        const endRenderer = instance.field("_holdEndSpriteRenderer1").value;
-        if (endRenderer && !endRenderer.isNull?.()) {
-            endRenderer.method("set_enabled").overload("System.Boolean").invoke(false);
-        }
-
-        processedHolds.add(key);
-        return;
-    }
-
-    const isMultiHead =
-        sameObject(noteImages.get(0), sprites.multi.holdHead) ||
-        sameObject(noteImages.get(1), sprites.multi.holdBody);
-
-    const isNormalHead =
-        sameObject(noteImages.get(0), sprites.normal.holdHead) ||
-        sameObject(noteImages.get(1), sprites.normal.holdBody);
-
-    // Wait until noteImages are initialized into either normal or multi signature.
-    if (!isMultiHead && !isNormalHead) {
-        return;
-    }
-
-    if (!isMultiHead) {
-        processedHolds.add(key);
-        return;
-    }
-
-    if (sprites.multi.holdEnd) {
-        noteImages.set(2, sprites.multi.holdEnd);
-    }
-    instance.field("noteImages").value = noteImages;
-
-    const endRenderer = instance.field("_holdEndSpriteRenderer1").value;
-    if (endRenderer && !endRenderer.isNull?.() && sprites.multi.holdEnd) {
-        endRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
-        endRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprites.multi.holdEnd);
-    }
-
-    processedHolds.add(key);
-}
-
 function tryGetParentLevelControl(uiChange: any, levelControlClass: any): any | null {
     const transform = uiChange.method("get_transform").invoke();
     if (!transform || transform.isNull?.()) {
@@ -456,6 +392,29 @@ function tryGetParentLevelControl(uiChange: any, levelControlClass: any): any | 
     return levelControl;
 }
 
+function pointerToBigInt(address: NativePointer): bigint {
+    return BigInt(address.toString());
+}
+
+function isArm64BReachable(from: NativePointer, to: NativePointer): boolean {
+    const delta = pointerToBigInt(to) - pointerToBigInt(from);
+    return delta >= ARM64_B_MIN && delta <= ARM64_B_MAX && (delta & 0x3n) === 0n;
+}
+
+function allocCaveNear(hookAddr: NativePointer): NativePointer {
+    const nearOptions = {
+        near: hookAddr,
+        maxDistance: Number(ARM64_B_MAX)
+    };
+
+    try {
+        return (Memory as any).alloc(Process.pageSize, nearOptions);
+    } catch (e) {
+        console.log(`[note-texture] near cave alloc failed, fallback to default alloc: ${e}`);
+        return Memory.alloc(Process.pageSize);
+    }
+}
+
 Il2Cpp.perform(() => {
     const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
     const LevelControl = AssemblyCSharp.class("LevelControl");
@@ -467,6 +426,12 @@ Il2Cpp.perform(() => {
 
     let loadedSprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } | null = null;
 
+    // Shared storage for the multi.holdEnd sprite pointer.
+    // The code caves read from this address at runtime.
+    // Initialized to NULL; updated when sprites load in LevelControl.Awake.
+    const spritePtrSlot = Memory.alloc(8);
+    spritePtrSlot.writePointer(ptr(0));
+
     const ensureLoadedSprites = (levelControl: any): { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } => {
         if (loadedSprites) {
             return loadedSprites;
@@ -476,23 +441,121 @@ Il2Cpp.perform(() => {
 
         loadedSprites = resolveTailModeSprites(templates);
 
+        if (loadedSprites.multi.holdEnd) {
+            spritePtrSlot.writePointer(loadedSprites.multi.holdEnd.handle);
+        }
+
         return loadedSprites;
     };
 
-    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE || Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        HoldControl.method("NoteMove", 0).implementation = function (this: any): void {
-            this.method("NoteMove").invoke();
+    // ---------- Inline hooks (code-cave style) ----------
+    //
+    // In JudgeLineControl.CreateNote, when a Hold is detected as multi-press (chord),
+    // the game writes:
+    //   noteImages[0] = HoldHL0  (head)    — STR X20, [Xn, #0x20]
+    //   noteImages[1] = HoldHL1  (body)    — STR X20, [Xn, #0x28]
+    // but NEVER writes noteImages[2] (tail).
+    //
+    // We replace the second STR with a branch to a code cave that:
+    //   1. Executes the original STR (noteImages[1] = HoldHL1)
+    //   2. Loads the multi.holdEnd sprite pointer from spritePtrSlot
+    //   3. If non-null, writes it to noteImages[2]  (array + 0x30)
+    //   4. Branches back to the next original instruction
+    //
+    // This patches exactly ONE instruction (4 bytes) per path, so
+    // the branch-target at LABEL_130 / LABEL_188 is never touched.
+    //
+    // Hook addresses (RVA):
+    //   "above" path: 0x2397bb8  STR X20, [X22, #0x28]  → return to 0x2397bbc
+    //   "below" path: 0x2397f64  STR X20, [X23, #0x28]  → return to 0x2397f68
 
-            try {
-                if (!loadedSprites) {
-                    return;
-                }
+    function installHoldEndCave(
+        hookRva: number,
+        noteImagesReg: string,
+        returnRva: number
+    ): void {
+        const base = Il2Cpp.module.base;
+        const hookAddr = base.add(hookRva);
+        const returnAddr = base.add(returnRva);
 
-                syncMultiHoldTailOnce(this, loadedSprites);
-            } catch (e) {
-                console.log(`[note-texture] failed multi hold tail sync: ${e}`);
-            }
-        };
+        // Read the original 4-byte instruction before we overwrite it
+        const originalBytes = hookAddr.readByteArray(4)!;
+
+        // Allocate code cave
+        const cave = allocCaveNear(hookAddr);
+
+        if (!isArm64BReachable(hookAddr, cave)) {
+            throw new Error(
+                `hook->cave branch out of range (hook=${hookAddr}, cave=${cave})`
+            );
+        }
+
+        if (!isArm64BReachable(cave, returnAddr)) {
+            throw new Error(
+                `cave->return branch out of range (cave=${cave}, return=${returnAddr})`
+            );
+        }
+
+        const w = new Arm64Writer(cave, { pc: cave });
+
+        // 1. Execute original: STR X20, [Xn, #0x28]
+        w.putBytes(originalBytes);
+
+        // 2. Load sprite pointer: X8 = *spritePtrSlot
+        //    (Arm64Writer emits LDR X8, [PC, #literal] with the address in a
+        //     literal pool appended after flush)
+        w.putLdrRegAddress("x8", spritePtrSlot);
+        w.putLdrRegRegOffset("x8", "x8", 0);
+
+        // 3. Skip if sprite pointer is NULL
+        w.putCbzRegLabel("x8", "skip");
+
+        // 4. noteImages[2] = sprite  →  STR X8, [Xn, #0x30]
+        (w as any).putStrRegRegOffset("x8", noteImagesReg, 0x30);
+
+        // 5. Branch back to the instruction after the original STR
+        w.putLabel("skip");
+        w.putBImm(returnAddr);
+
+        w.flush();
+
+        // Make the cave executable (drop write permission)
+        Memory.protect(cave, Process.pageSize, "r-x");
+
+        // Patch the original STR with an unconditional B to the cave
+        Memory.patchCode(hookAddr, 4, (code: NativePointer) => {
+            const p = new Arm64Writer(code, { pc: hookAddr });
+            p.putBImm(cave);
+            p.flush();
+        });
+
+        console.log(
+            `[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} → ${cave} (reg=${noteImagesReg})`
+        );
+    }
+
+    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        let caveInstallFailed = false;
+
+        try {
+            // "above" path — noteImages in X22
+            installHoldEndCave(0x2397bb8, "x22", 0x2397bbc);
+        } catch (e) {
+            caveInstallFailed = true;
+            console.log(`[note-texture] failed cave install (above @ 0x2397bb8): ${e}`);
+        }
+
+        try {
+            // "below" path — noteImages in X23
+            installHoldEndCave(0x2397f64, "x23", 0x2397f68);
+        } catch (e) {
+            caveInstallFailed = true;
+            console.log(`[note-texture] failed cave install (below @ 0x2397f64): ${e}`);
+        }
+
+        if (!caveInstallFailed) {
+            console.log("[note-texture] code caves installed for multi hold tail (SEPARATE mode)");
+        }
     }
 
     LevelControl.method("Awake", 0).implementation = function (this: any): void {

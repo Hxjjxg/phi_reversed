@@ -1,3 +1,6 @@
+📦
+156289 /scripts/note_texture_hook/note_texture_replace_bridge_changed.js
+✄
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3351,10 +3354,9 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     var HOLD_TAIL_MODE_NONE = 1;
     var HOLD_TAIL_MODE_SHARED = 2;
     var HOLD_TAIL_MODE_SEPARATE = 3;
-    var SPRITE_MESH_TYPE_FULL_RECT = 0;
+    var ARM64_B_MIN = -0x08000000n;
+    var ARM64_B_MAX = 0x07fffffcn;
     var HOLD_TAIL_MODE = HOLD_TAIL_MODE_SEPARATE;
-    var LOG_HOLD_TAIL_DEBUG = true;
-    var holdTailDebugLogBudget = 40;
     var NOTE_TEXTURES = {
       normal: {
         click: "/data/local/tmp/click.png",
@@ -3451,7 +3453,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       }
       return { pivotX, pivotY, pixelsPerUnit };
     }
-    function createCustomSprite(imagePath, templateSprite = null, useFullRectMesh = false) {
+    function createCustomSprite(imagePath, templateSprite = null) {
       const Texture2D = resolveClass("UnityEngine.Texture2D", ["UnityEngine.CoreModule"]);
       const Sprite = resolveClass("UnityEngine.Sprite", ["UnityEngine.CoreModule"]);
       const Rect = resolveClass("UnityEngine.Rect", ["UnityEngine.CoreModule"]);
@@ -3472,15 +3474,12 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       const params = getSpriteCreateParams(templateSprite);
       const pivot = Vector2.alloc();
       pivot.method(".ctor").overload("System.Single", "System.Single").invoke(params.pivotX, params.pivotY);
-      if (useFullRectMesh) {
-        return Sprite.method("Create").overload("UnityEngine.Texture2D", "UnityEngine.Rect", "UnityEngine.Vector2", "System.Single", "System.UInt32", "UnityEngine.SpriteMeshType").invoke(texture, rect.unbox(), pivot.unbox(), params.pixelsPerUnit, 0, SPRITE_MESH_TYPE_FULL_RECT);
-      }
       return Sprite.method("Create").overload("UnityEngine.Texture2D", "UnityEngine.Rect", "UnityEngine.Vector2", "System.Single").invoke(texture, rect.unbox(), pivot.unbox(), params.pixelsPerUnit);
     }
-    function getOrCreateSprite(cacheKey, imagePath, templateSprite, useFullRectMesh = false) {
+    function getOrCreateSprite(cacheKey, imagePath, templateSprite) {
       let sprite = spriteCache.get(cacheKey);
       if (!sprite) {
-        sprite = createCustomSprite(imagePath, templateSprite, useFullRectMesh);
+        sprite = createCustomSprite(imagePath, templateSprite);
         spriteCache.set(cacheKey, sprite);
       }
       return sprite;
@@ -3492,7 +3491,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         flick: getOrCreateSprite(`${prefix}:flick:${paths.flick}`, paths.flick, templates.flick),
         holdHead: getOrCreateSprite(`${prefix}:holdHead:${paths.holdHead}`, paths.holdHead, templates.holdHead),
         holdBody: getOrCreateSprite(`${prefix}:holdBody:${paths.holdBody}`, paths.holdBody, templates.holdBody),
-        holdEnd: getOrCreateSprite(`${prefix}:holdEnd:${paths.holdEnd}`, paths.holdEnd, templates.holdEnd, true)
+        holdEnd: getOrCreateSprite(`${prefix}:holdEnd:${paths.holdEnd}`, paths.holdEnd, templates.holdEnd)
       };
     }
     function getComponent(gameObject, componentClass) {
@@ -3501,30 +3500,6 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         throw new Error(`GetComponent failed: ${componentClass.type.name}`);
       }
       return component;
-    }
-    function sameObject(a, b) {
-      if (!a || !b) {
-        return false;
-      }
-      const aHandle = a.handle ?? a;
-      const bHandle = b.handle ?? b;
-      if (!aHandle || !bHandle) {
-        return false;
-      }
-      if (typeof aHandle.equals === "function") {
-        return aHandle.equals(bHandle);
-      }
-      return aHandle.toString() === bHandle.toString();
-    }
-    function isNonNullObject(value) {
-      return !!value && !value.isNull?.();
-    }
-    function logHoldTailDebug(message) {
-      if (!LOG_HOLD_TAIL_DEBUG || holdTailDebugLogBudget <= 0) {
-        return;
-      }
-      holdTailDebugLogBudget -= 1;
-      console.log(`[note-texture] ${message}`);
     }
     function replacePrefabNoteImage(gameObject, componentClass, sprite) {
       const component = getComponent(gameObject, componentClass);
@@ -3625,78 +3600,12 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         return { normal, multi };
       }
       try {
-        multi.holdEnd = getOrCreateSprite(`multi:holdEndSeparate:${NOTE_TEXTURES.multi.holdEnd}`, NOTE_TEXTURES.multi.holdEnd, templates.multi.holdEnd, true);
+        multi.holdEnd = getOrCreateSprite(`multi:holdEndSeparate:${NOTE_TEXTURES.multi.holdEnd}`, NOTE_TEXTURES.multi.holdEnd, templates.multi.holdEnd);
       } catch (e) {
         multi.holdEnd = normal.holdEnd;
         console.log(`[note-texture] separate multi hold tail load failed, fallback to shared tail: ${e}`);
       }
       return { normal, multi };
-    }
-    function syncHoldTailState(instance, targetTail, source) {
-      const key = instance.handle?.toString?.() ?? "<no-handle>";
-      const noteImages = instance.field("noteImages").value;
-      if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
-        logHoldTailDebug(`hold tail skip src=${source} key=${key} reason=noteImages_invalid`);
-        return;
-      }
-      if (targetTail && !sameObject(noteImages.get(2), targetTail)) {
-        noteImages.set(2, targetTail);
-        instance.field("noteImages").value = noteImages;
-      }
-      const enabled = !!targetTail;
-      try {
-        const holdEnd = instance.field("holdEnd").value;
-        if (isNonNullObject(holdEnd)) {
-          holdEnd.method("SetActive").overload("System.Boolean").invoke(enabled);
-        }
-      } catch {
-      }
-      try {
-        const endRenderer = instance.field("_holdEndSpriteRenderer1").value;
-        if (isNonNullObject(endRenderer)) {
-          endRenderer.method("set_enabled").overload("System.Boolean").invoke(enabled);
-          if (targetTail) {
-            endRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(targetTail);
-          }
-        }
-      } catch {
-      }
-      logHoldTailDebug(`hold tail apply src=${source} key=${key} enabled=${enabled}`);
-    }
-    function syncMultiHoldTail(instance, sprites, source) {
-      const key = instance.handle?.toString?.() ?? "<no-handle>";
-      const noteImages = instance.field("noteImages").value;
-      if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
-        logHoldTailDebug(`hold tail skip src=${source} key=${key} reason=noteImages_invalid`);
-        return;
-      }
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        syncHoldTailState(instance, null, source);
-        return;
-      }
-      const headSprite = noteImages.get(0);
-      const bodySprite = noteImages.get(1);
-      if (!isNonNullObject(headSprite) || !isNonNullObject(bodySprite)) {
-        logHoldTailDebug(`hold tail skip src=${source} key=${key} reason=head_or_body_not_ready`);
-        return;
-      }
-      const isNormalHeadBody = sameObject(headSprite, sprites.normal.holdHead) && sameObject(bodySprite, sprites.normal.holdBody);
-      let isMultiByJudgeLine = false;
-      try {
-        const judgeLine = instance.field("judgeLine").value;
-        if (isNonNullObject(judgeLine)) {
-          const jlHoldHL0 = judgeLine.field("HoldHL0").value;
-          const jlHoldHL1 = judgeLine.field("HoldHL1").value;
-          const hasHL0 = isNonNullObject(jlHoldHL0);
-          const hasHL1 = isNonNullObject(jlHoldHL1);
-          isMultiByJudgeLine = hasHL0 && sameObject(headSprite, jlHoldHL0) || hasHL1 && sameObject(bodySprite, jlHoldHL1);
-        }
-      } catch {
-      }
-      const isMultiHold = isMultiByJudgeLine || !isNormalHeadBody;
-      const targetTail = isMultiHold ? sprites.multi.holdEnd : sprites.normal.holdEnd;
-      logHoldTailDebug(`hold tail classify src=${source} key=${key} multi=${isMultiHold} byJudgeLine=${isMultiByJudgeLine} normalPair=${isNormalHeadBody} targetTail=${!!targetTail}`);
-      syncHoldTailState(instance, targetTail, source);
     }
     function tryGetParentLevelControl(uiChange, levelControlClass) {
       const transform = uiChange.method("get_transform").invoke();
@@ -3717,6 +3626,25 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       }
       return levelControl;
     }
+    function pointerToBigInt(address) {
+      return BigInt(address.toString());
+    }
+    function isArm64BReachable(from, to) {
+      const delta = pointerToBigInt(to) - pointerToBigInt(from);
+      return delta >= ARM64_B_MIN && delta <= ARM64_B_MAX && (delta & 0x3n) === 0n;
+    }
+    function allocCaveNear(hookAddr) {
+      const nearOptions = {
+        near: hookAddr,
+        maxDistance: Number(ARM64_B_MAX)
+      };
+      try {
+        return Memory.alloc(Process.pageSize, nearOptions);
+      } catch (e) {
+        console.log(`[note-texture] near cave alloc failed, fallback to default alloc: ${e}`);
+        return Memory.alloc(Process.pageSize);
+      }
+    }
     Il2Cpp.perform(() => {
       const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
       const LevelControl = AssemblyCSharp.class("LevelControl");
@@ -3726,39 +3654,65 @@ var require_note_texture_replace_bridge_changed = __commonJS({
       const HoldControl = AssemblyCSharp.class("HoldControl");
       const UiChange = AssemblyCSharp.tryClass("UiChange");
       let loadedSprites = null;
+      const spritePtrSlot = Memory.alloc(8);
+      spritePtrSlot.writePointer(ptr(0));
       const ensureLoadedSprites = (levelControl) => {
         if (loadedSprites) {
           return loadedSprites;
         }
         const templates = collectTemplateSprites(levelControl, ClickControl, DragControl, FlickControl, HoldControl);
         loadedSprites = resolveTailModeSprites(templates);
+        if (loadedSprites.multi.holdEnd) {
+          spritePtrSlot.writePointer(loadedSprites.multi.holdEnd.handle);
+        }
         return loadedSprites;
       };
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE || Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        HoldControl.method("Start", 0).implementation = function() {
-          this.method("Start").invoke();
-          try {
-            if (!loadedSprites) {
-              logHoldTailDebug("hold tail skip src=start reason=sprites_not_loaded");
-              return;
-            }
-            syncMultiHoldTail(this, loadedSprites, "start");
-          } catch (e) {
-            console.log(`[note-texture] failed multi hold tail sync at Start: ${e}`);
-          }
-        };
-        HoldControl.method("NoteMove", 0).implementation = function() {
-          this.method("NoteMove").invoke();
-          try {
-            if (!loadedSprites) {
-              logHoldTailDebug("hold tail skip src=move reason=sprites_not_loaded");
-              return;
-            }
-            syncMultiHoldTail(this, loadedSprites, "move");
-          } catch (e) {
-            console.log(`[note-texture] failed multi hold tail sync: ${e}`);
-          }
-        };
+      function installHoldEndCave(hookRva, noteImagesReg, returnRva) {
+        const base = Il2Cpp.module.base;
+        const hookAddr = base.add(hookRva);
+        const returnAddr = base.add(returnRva);
+        const originalBytes = hookAddr.readByteArray(4);
+        const cave = allocCaveNear(hookAddr);
+        if (!isArm64BReachable(hookAddr, cave)) {
+          throw new Error(`hook->cave branch out of range (hook=${hookAddr}, cave=${cave})`);
+        }
+        if (!isArm64BReachable(cave, returnAddr)) {
+          throw new Error(`cave->return branch out of range (cave=${cave}, return=${returnAddr})`);
+        }
+        const w = new Arm64Writer(cave, { pc: cave });
+        w.putBytes(originalBytes);
+        w.putLdrRegAddress("x8", spritePtrSlot);
+        w.putLdrRegRegOffset("x8", "x8", 0);
+        w.putCbzRegLabel("x8", "skip");
+        w.putStrRegRegOffset("x8", noteImagesReg, 48);
+        w.putLabel("skip");
+        w.putBImm(returnAddr);
+        w.flush();
+        Memory.protect(cave, Process.pageSize, "r-x");
+        Memory.patchCode(hookAddr, 4, (code) => {
+          const p = new Arm64Writer(code, { pc: hookAddr });
+          p.putBImm(cave);
+          p.flush();
+        });
+        console.log(`[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} \u2192 ${cave} (reg=${noteImagesReg})`);
+      }
+      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
+        let caveInstallFailed = false;
+        try {
+          installHoldEndCave(37321656, "x22", 37321660);
+        } catch (e) {
+          caveInstallFailed = true;
+          console.log(`[note-texture] failed cave install (above @ 0x2397bb8): ${e}`);
+        }
+        try {
+          installHoldEndCave(37322596, "x23", 37322600);
+        } catch (e) {
+          caveInstallFailed = true;
+          console.log(`[note-texture] failed cave install (below @ 0x2397f64): ${e}`);
+        }
+        if (!caveInstallFailed) {
+          console.log("[note-texture] code caves installed for multi hold tail (SEPARATE mode)");
+        }
       }
       LevelControl.method("Awake", 0).implementation = function() {
         this.method("Awake").invoke();
@@ -3790,4 +3744,4 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     });
   }
 });
-require_note_texture_replace_bridge_changed();
+export default require_note_texture_replace_bridge_changed();

@@ -1,5 +1,5 @@
 📦
-155865 /scripts/note_texture_hook/note_texture_replace_bridge changed.js
+157673 /scripts/note_texture_hook/note_texture_replace_bridge_changed.js
 ✄
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -3345,16 +3345,17 @@ ${this.isEnum ? `enum` : this.isStruct ? `struct` : this.isInterface ? `interfac
   }
 });
 
-// scripts/note_texture_hook/note_texture_replace_bridge changed.ts
+// scripts/note_texture_hook/note_texture_replace_bridge_changed.ts
 var require_note_texture_replace_bridge_changed = __commonJS({
-  "scripts/note_texture_hook/note_texture_replace_bridge changed.ts"(exports) {
+  "scripts/note_texture_hook/note_texture_replace_bridge_changed.ts"(exports) {
     init_node_globals();
     Object.defineProperty(exports, "__esModule", { value: true });
     init_dist();
     var HOLD_TAIL_MODE_NONE = 1;
     var HOLD_TAIL_MODE_SHARED = 2;
     var HOLD_TAIL_MODE_SEPARATE = 3;
-    var HOLD_TAIL_MODE = HOLD_TAIL_MODE_NONE;
+    var HOLD_TAIL_MODE = HOLD_TAIL_MODE_SEPARATE;
+    var LOG_MODE3_HOLD_TAIL = true;
     var NOTE_TEXTURES = {
       normal: {
         click: "/data/local/tmp/click.png",
@@ -3376,6 +3377,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
     var FridaFile = globalThis.File;
     var spriteCache = /* @__PURE__ */ new Map();
     var processedHolds = /* @__PURE__ */ new Set();
+    var loggedHolds = /* @__PURE__ */ new Set();
     function resolveClass(fullName, preferredAssemblies = []) {
       for (const asmName of preferredAssemblies) {
         const asm = Il2Cpp.domain.tryAssembly(asmName);
@@ -3637,25 +3639,65 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         processedHolds.add(key);
         return;
       }
-      const isMultiHead = sameObject(noteImages.get(0), sprites.multi.holdHead) || sameObject(noteImages.get(1), sprites.multi.holdBody);
-      const isNormalHead = sameObject(noteImages.get(0), sprites.normal.holdHead) || sameObject(noteImages.get(1), sprites.normal.holdBody);
-      if (!isMultiHead && !isNormalHead) {
-        return;
+      let judgeLineReady = false;
+      let isMultiHead = false;
+      try {
+        const judgeLine = instance.field("judgeLine").value;
+        if (judgeLine && !judgeLine.isNull?.()) {
+          const jlHoldHL0 = judgeLine.field("HoldHL0").value;
+          const jlHoldHL1 = judgeLine.field("HoldHL1").value;
+          const hasHL0 = !!jlHoldHL0 && !jlHoldHL0.isNull?.();
+          const hasHL1 = !!jlHoldHL1 && !jlHoldHL1.isNull?.();
+          if (hasHL0 || hasHL1) {
+            judgeLineReady = true;
+            isMultiHead = hasHL0 && sameObject(noteImages.get(0), jlHoldHL0) || hasHL1 && sameObject(noteImages.get(1), jlHoldHL1);
+          }
+        }
+      } catch {
       }
-      if (!isMultiHead) {
+      if (!judgeLineReady) {
+        isMultiHead = sameObject(noteImages.get(0), sprites.multi.holdHead) || sameObject(noteImages.get(1), sprites.multi.holdBody);
+        const looksNormal = sameObject(noteImages.get(0), sprites.normal.holdHead) || sameObject(noteImages.get(1), sprites.normal.holdBody);
+        if (!isMultiHead && !looksNormal) {
+          return;
+        }
+        if (!isMultiHead && looksNormal) {
+          processedHolds.add(key);
+          if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
+            loggedHolds.add(key);
+            console.log(`[note-texture] mode3 hold normal(no tail patch) key=${key}`);
+          }
+          return;
+        }
+      } else if (!isMultiHead) {
         processedHolds.add(key);
+        if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
+          loggedHolds.add(key);
+          console.log(`[note-texture] mode3 hold normal(by judgeLine) key=${key}`);
+        }
         return;
       }
       if (sprites.multi.holdEnd) {
         noteImages.set(2, sprites.multi.holdEnd);
       }
       instance.field("noteImages").value = noteImages;
+      try {
+        const holdEnd = instance.field("holdEnd").value;
+        if (holdEnd && !holdEnd.isNull?.()) {
+          holdEnd.method("SetActive").overload("System.Boolean").invoke(true);
+        }
+      } catch {
+      }
       const endRenderer = instance.field("_holdEndSpriteRenderer1").value;
       if (endRenderer && !endRenderer.isNull?.() && sprites.multi.holdEnd) {
         endRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
         endRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprites.multi.holdEnd);
       }
       processedHolds.add(key);
+      if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
+        loggedHolds.add(key);
+        console.log(`[note-texture] mode3 hold multi tail patched key=${key}`);
+      }
     }
     function tryGetParentLevelControl(uiChange, levelControlClass) {
       const transform = uiChange.method("get_transform").invoke();
@@ -3694,6 +3736,7 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         return loadedSprites;
       };
       if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE || Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
+        console.log(`[note-texture] HoldControl.NoteMove hook enabled for tail mode=${HOLD_TAIL_MODE}`);
         HoldControl.method("NoteMove", 0).implementation = function() {
           this.method("NoteMove").invoke();
           try {
