@@ -66,6 +66,81 @@ const NOTE_TEXTURES: { normal: NoteSpritePathSet; multi: NoteSpritePathSet } = {
 
 const FridaFile = (globalThis as any).File;
 const spriteCache = new Map<string, any>();
+const pinnedSpriteHandles = new Set<string>();
+const pinnedGcHandles: any[] = [];
+let unityObjectClassCache: any | null = null;
+let unityObjectImplicitMethodCache: any | null = null;
+
+function isEngineAliveUnityObject(obj: any): boolean {
+    try {
+        if (!unityObjectClassCache) {
+            unityObjectClassCache = resolveClass("UnityEngine.Object", ["UnityEngine.CoreModule"]);
+        }
+
+        if (!unityObjectImplicitMethodCache) {
+            unityObjectImplicitMethodCache = unityObjectClassCache
+                .method("op_Implicit")
+                .overload("UnityEngine.Object");
+        }
+
+        return !!unityObjectImplicitMethodCache.invoke(obj);
+    } catch {
+        // If implicit check is unavailable, do not block fallback path.
+        return true;
+    }
+}
+
+function isLiveUnityObject(obj: any): boolean {
+    if (!obj) {
+        return false;
+    }
+
+    try {
+        if (obj.isNull?.()) {
+            return false;
+        }
+    } catch {
+        return false;
+    }
+
+    try {
+        if (!obj.handle) {
+            return false;
+        }
+    } catch {
+        return false;
+    }
+
+    try {
+        if (!isEngineAliveUnityObject(obj)) {
+            return false;
+        }
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function pinManagedObject(obj: any, tag: string): void {
+    if (!isLiveUnityObject(obj)) {
+        return;
+    }
+
+    const key = obj.handle?.toString?.();
+    if (!key || pinnedSpriteHandles.has(key)) {
+        return;
+    }
+
+    try {
+        const GCHandle = Il2Cpp.corlib.class("System.Runtime.InteropServices.GCHandle");
+        const handle = GCHandle.method("Alloc").overload("System.Object").invoke(obj);
+        pinnedGcHandles.push(handle);
+        pinnedSpriteHandles.add(key);
+    } catch (e) {
+        console.log(`[note-texture] GCHandle pin failed (${tag}): ${e}`);
+    }
+}
 
 function resolveClass(fullName: string, preferredAssemblies: string[] = []): any {
     for (const asmName of preferredAssemblies) {
@@ -203,10 +278,28 @@ function createCustomSprite(imagePath: string, templateSprite: any = null): any 
 
 function getOrCreateSprite(cacheKey: string, imagePath: string, templateSprite: any): any {
     let sprite = spriteCache.get(cacheKey);
+    if (sprite) {
+        let dead = false;
+        try {
+            dead = sprite.isNull?.() === true;
+        } catch {
+            dead = true;
+        }
+
+        if (dead) {
+            spriteCache.delete(cacheKey);
+            sprite = null;
+            console.log(`[note-texture] cached sprite dead, rebuilding: ${cacheKey}`);
+        }
+    }
+
     if (!sprite) {
         sprite = createCustomSprite(imagePath, templateSprite);
         spriteCache.set(cacheKey, sprite);
     }
+
+    pinManagedObject(sprite, cacheKey);
+
     return sprite;
 }
 
@@ -442,9 +535,19 @@ Il2Cpp.perform(() => {
     const FlickControl = AssemblyCSharp.class("FlickControl");
     const HoldControl = AssemblyCSharp.class("HoldControl");
     const UiChange = AssemblyCSharp.tryClass("UiChange");
+    const UnitySprite = resolveClass("UnityEngine.Sprite", ["UnityEngine.CoreModule"]);
+    const SpriteRendererClass = resolveClass("UnityEngine.SpriteRenderer", ["UnityEngine.CoreModule"]);
 
     let loadedSprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } | null = null;
     const processedHolds = new Set<string>();
+    const forcedTailByHold = new Map<string, any>();
+    const forceLoggedHolds = new Set<string>();
+    const watchedTailRenderers = new Set<string>();
+    let fallbackPatchedCount = 0;
+    let fallbackForcedCount = 0;
+    let forcedTailNullWarnCount = 0;
+    let tailSetSpriteTraceCount = 0;
+    let inForceTailRendererDepth = 0;
 
     // Keep cave pointers alive for the script lifetime.
     // Without strong references, Frida may recycle these allocations.
@@ -469,7 +572,44 @@ Il2Cpp.perform(() => {
             spritePtrSlot.writePointer(loadedSprites.multi.holdEnd.handle);
         }
 
+        pinManagedObject(loadedSprites.normal.holdEnd, "normal:holdEnd");
+        pinManagedObject(loadedSprites.multi.holdEnd, "multi:holdEnd");
+
         return loadedSprites;
+    };
+
+    const ensureLiveSeparateTailSprite = (): any | null => {
+        if (!loadedSprites) {
+            return null;
+        }
+
+        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE) {
+            return loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
+        }
+
+        const current = loadedSprites.multi.holdEnd;
+        if (isLiveUnityObject(current)) {
+            return current;
+        }
+
+        try {
+            const rebuilt = getOrCreateSprite(
+                `multi:holdEndSeparate:${NOTE_TEXTURES.multi.holdEnd}`,
+                NOTE_TEXTURES.multi.holdEnd,
+                loadedSprites.normal.holdEnd ?? loadedSprites.multi.holdBody
+            );
+
+            loadedSprites.multi.holdEnd = rebuilt;
+            if (isLiveUnityObject(rebuilt)) {
+                spritePtrSlot.writePointer(rebuilt.handle);
+                console.log("[note-texture] rebuilt live multi hold tail sprite");
+                return rebuilt;
+            }
+        } catch (e) {
+            console.log(`[note-texture] rebuild multi hold tail sprite failed: ${e}`);
+        }
+
+        return loadedSprites.normal.holdEnd;
     };
 
     const sameObject = (a: any, b: any): boolean => {
@@ -497,25 +637,42 @@ Il2Cpp.perform(() => {
         }
     };
 
-    const syncMultiTailBeforeNoteMove = (instance: any): void => {
+    const getHoldKey = (instance: any): string | null => {
+        try {
+            return instance.handle?.toString?.() ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    const watchRenderer = (renderer: any): void => {
+        try {
+            const key = renderer?.handle?.toString?.();
+            if (key) {
+                watchedTailRenderers.add(key);
+            }
+        } catch {
+        }
+    };
+
+    const syncMultiTailBeforeNoteMove = (instance: any): any | null => {
         if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE || !loadedSprites) {
-            return;
+            return null;
         }
 
-        const key = instance.handle?.toString?.();
-        if (!key || processedHolds.has(key)) {
-            return;
+        const key = getHoldKey(instance);
+        if (!key) {
+            return null;
         }
 
         const noteImages = instance.field("noteImages").value;
-        if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
-            processedHolds.add(key);
-            return;
+        if (!noteImages || noteImages.isNull?.() || noteImages.length < 2) {
+            return null;
         }
 
         const judgeLine = instance.field("judgeLine").value;
         if (!judgeLine || judgeLine.isNull?.()) {
-            return;
+            return null;
         }
 
         const holdHL0 = judgeLine.field("HoldHL0").value;
@@ -526,14 +683,22 @@ Il2Cpp.perform(() => {
             (noteImages.length > 1 && sameObject(noteImages.get(1), holdHL1));
 
         if (!isMulti) {
-            processedHolds.add(key);
-            return;
+            forcedTailByHold.delete(key);
+            return null;
         }
 
-        const targetTail = loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
+        const targetTail = ensureLiveSeparateTailSprite() ?? loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
         if (targetTail) {
-            noteImages.set(2, targetTail);
-            instance.field("noteImages").value = noteImages;
+            forcedTailByHold.set(key, targetTail);
+            if (noteImages.length >= 3) {
+                noteImages.set(2, targetTail);
+                instance.field("noteImages").value = noteImages;
+            } else {
+                const e0 = noteImages.get(0);
+                const e1 = noteImages.get(1);
+                const expanded = Il2Cpp.array(UnitySprite, [e0, e1, targetTail]);
+                instance.field("noteImages").value = expanded;
+            }
         }
 
         try {
@@ -544,21 +709,162 @@ Il2Cpp.perform(() => {
         } catch {
         }
 
-        processedHolds.add(key);
+        if (!processedHolds.has(key)) {
+            processedHolds.add(key);
+            fallbackPatchedCount++;
+            if (fallbackPatchedCount <= 12) {
+                const lenAfter = instance.field("noteImages").value?.length;
+                console.log(`[note-texture] fallback patched multi hold tail (#${fallbackPatchedCount}, len=${lenAfter})`);
+            }
+        }
+
+        return targetTail;
+    };
+
+    const forceTailRenderer = (instance: any, tailSprite: any): void => {
+        let forced = false;
+
+        if (!isLiveUnityObject(tailSprite)) {
+            if (forcedTailNullWarnCount < 12) {
+                forcedTailNullWarnCount++;
+                console.log(`[note-texture] forceTailRenderer skipped dead tail sprite: handle=${tailSprite?.handle}`);
+            }
+            return;
+        }
+
+        inForceTailRendererDepth++;
+        try {
+            const tailGo = instance.field("holdEnd").value;
+            if (tailGo && !tailGo.isNull?.()) {
+                tailGo.method("SetActive").overload("System.Boolean").invoke(true);
+
+                try {
+                    const sr = tailGo.method("GetComponent")
+                        .overload("System.Type")
+                        .invoke(SpriteRendererClass.type.object);
+                    if (sr && !sr.isNull?.()) {
+                        watchRenderer(sr);
+                        sr.method("set_enabled").overload("System.Boolean").invoke(true);
+                        sr.method("set_sortingOrder").overload("System.Int32").invoke(-1);
+                        sr.method("set_sprite").overload("UnityEngine.Sprite").invoke(tailSprite);
+                        forced = true;
+                    }
+                } catch {
+                }
+            }
+        } catch {
+        }
+
+        try {
+            const tailRenderer = instance.field("_holdEndSpriteRenderer1").value;
+            if (tailRenderer && !tailRenderer.isNull?.()) {
+                watchRenderer(tailRenderer);
+                tailRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
+                tailRenderer.method("set_sortingOrder").overload("System.Int32").invoke(-1);
+                tailRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(tailSprite);
+                forced = true;
+            }
+        } catch {
+        } finally {
+            inForceTailRendererDepth--;
+        }
+
+        const key = getHoldKey(instance);
+        if (forced && key && !forceLoggedHolds.has(key)) {
+            forceLoggedHolds.add(key);
+            fallbackForcedCount++;
+            if (fallbackForcedCount <= 12) {
+                try {
+                    const tailRenderer = instance.field("_holdEndSpriteRenderer1").value;
+                    const current = tailRenderer?.method("get_sprite").overload().invoke();
+                    console.log(
+                        `[note-texture] fallback forced tail renderer (#${fallbackForcedCount}, key=${key}, sprite=${current?.handle})`
+                    );
+                } catch {
+                    console.log(`[note-texture] fallback forced tail renderer (#${fallbackForcedCount}, key=${key})`);
+                }
+            }
+        }
     };
 
     if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
         HoldControl.method("NoteMove", 0).implementation = function (this: any): void {
+            const key = getHoldKey(this);
+            let forcedTail: any | null = null;
+
             try {
-                syncMultiTailBeforeNoteMove(this);
+                forcedTail = syncMultiTailBeforeNoteMove(this);
             } catch (e) {
                 console.log(`[note-texture] fallback multi tail sync failed: ${e}`);
             }
 
             this.method("NoteMove").invoke();
+
+            if (!forcedTail && key) {
+                forcedTail = forcedTailByHold.get(key) ?? null;
+            }
+
+            if (forcedTail) {
+                forceTailRenderer(this, forcedTail);
+            }
         };
 
-        console.log("[note-texture] fallback enabled: HoldControl.NoteMove pre-sync for multi hold tail");
+        HoldControl.method("Judge", 0).implementation = function (this: any): any {
+            const result = this.method("Judge").invoke();
+
+            try {
+                const key = getHoldKey(this);
+                if (key) {
+                    const forcedTail = forcedTailByHold.get(key);
+                    if (forcedTail) {
+                        forceTailRenderer(this, forcedTail);
+                    }
+                }
+            } catch (e) {
+                console.log(`[note-texture] fallback post-Judge tail force failed: ${e}`);
+            }
+
+            return result;
+        };
+
+        SpriteRendererClass.method("set_sprite")
+            .overload("UnityEngine.Sprite")
+            .implementation = function (this: any, sprite: any): void {
+                const rendererKey = this.handle?.toString?.() ?? null;
+                const traced = !!rendererKey && watchedTailRenderers.has(rendererKey);
+
+                let beforeHandle = "<na>";
+                if (traced && tailSetSpriteTraceCount < 80) {
+                    try {
+                        const before = this.method("get_sprite").overload().invoke();
+                        beforeHandle = before?.handle?.toString?.() ?? "0x0";
+                    } catch {
+                        beforeHandle = "<err>";
+                    }
+                }
+
+                this.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprite);
+
+                if (traced && tailSetSpriteTraceCount < 80) {
+                    tailSetSpriteTraceCount++;
+
+                    let afterHandle = "<na>";
+                    try {
+                        const after = this.method("get_sprite").overload().invoke();
+                        afterHandle = after?.handle?.toString?.() ?? "0x0";
+                    } catch {
+                        afterHandle = "<err>";
+                    }
+
+                    const argHandle = sprite?.handle?.toString?.() ?? "0x0";
+                    const src = inForceTailRendererDepth > 0 ? "fallback" : "external";
+                    console.log(
+                        `[note-texture][trace] set_sprite src=${src} renderer=${rendererKey} arg=${argHandle} before=${beforeHandle} after=${afterHandle}`
+                    );
+                }
+            };
+
+        console.log("[note-texture] fallback enabled: HoldControl.NoteMove+Judge tail force for multi hold tail");
     }
 
     // ---------- Inline hooks (code-cave style) ----------
