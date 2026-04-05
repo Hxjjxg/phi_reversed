@@ -14,10 +14,11 @@ package-lock.json
 # 工具/外部依赖
 Files_il2cppdumper/
 il2cpp_bridge_sourcecode_and_wiki/
-binary_file_and_exported_symbols/
+binary_file_and_exported_symbols/libil2cpp.so
+binary_file_and_exported_symbols/UnityFramework
 
 # 运行时生成
-chart/*.json
+#chart/*.json
 
 # 临时文件
 scripts/note_texture_hook/.tmp_*.js
