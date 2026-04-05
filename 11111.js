@@ -3694,6 +3694,8 @@ var require_note_texture_replace_bridge_changed = __commonJS({
         }
         const w = new Arm64Writer(cave, { pc: cave });
         w.putBytes(originalBytes);
+        w.putCmpRegImm("x8", 2);
+        w.putBCondLabel("ls", "skip");
         w.putLdrRegAddress("x8", spritePtrSlot);
         w.putLdrRegRegOffset("x8", "x8", 0);
         w.putCbzRegLabel("x8", "skip");

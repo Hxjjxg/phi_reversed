@@ -524,6 +524,12 @@ Il2Cpp.perform(() => {
         // 1. Execute original: STR X20, [Xn, #0x28]
         w.putBytes(originalBytes);
 
+        // 1.5 Guard: only write noteImages[2] when array length > 2.
+        // At hook sites, X8 still carries the array length that was compared
+        // by the original code (CMP W8, #1 / B.LS ...).
+        (w as any).putCmpRegImm("x8", 2);
+        (w as any).putBCondLabel("ls", "skip");
+
         // 2. Load sprite pointer: X8 = *spritePtrSlot
         //    (Arm64Writer emits LDR X8, [PC, #literal] with the address in a
         //     literal pool appended after flush)
