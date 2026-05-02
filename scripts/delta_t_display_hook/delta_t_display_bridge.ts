@@ -18,6 +18,10 @@ const ACC_OVERLAY_NAME = "AccOverlayText";
 const ACC_OFFSET_Y = -54;
 const ACC_FONT_SCALE = 0.55;
 const ACC_FONT_MIN_SIZE = 16;
+const COUNTS_OVERLAY_NAME = "CountsOverlayText";
+const COUNTS_OFFSET_Y = -90;
+const COUNTS_FONT_SCALE = 0.45;
+const COUNTS_FONT_MIN_SIZE = 12;
 const JUDGE_CORE_WIDTH = 4;
 const JUDGE_OUTER_PAD = 2;
 const DELTA_T_YELLOW_MAX_MS = 80;
@@ -95,6 +99,10 @@ function formatAccuracyText(percent: number): string {
     return `acc=${normalized.toFixed(2)}%`;
 }
 
+function formatCountsText(perfect: number, good: number, bad: number, miss: number): string {
+    return `<color=${DELTA_T_COLOR_YELLOW}>P:${perfect}</color>  <color=${DELTA_T_COLOR_BLUE}>G:${good}</color>  <color=${DELTA_T_COLOR_RED}>B:${bad}</color>  <color=${DELTA_T_COLOR_RED}>M:${miss}</color>`;
+}
+
 function computeAccuracy(thisObj: any): number {
     const good = Number(thisObj.field("good").value ?? 0);
     const perfect = Number(thisObj.field("perfect").value ?? 0);
@@ -133,6 +141,7 @@ Il2Cpp.perform(() => {
 
     const overlayState = new Map<string, OverlayState>();
     const accTextState = new Map<string, any>();
+    const countsTextState = new Map<string, any>();
 
     function tryAttachOverlay(referenceText: any, overlayText: any): void {
         try {
@@ -271,6 +280,43 @@ Il2Cpp.perform(() => {
         }
     }
 
+    function ensureCountsText(thisObj: any): any | null {
+        const key = thisObj.handle.toString();
+        const cached = countsTextState.get(key);
+        if (cached) {
+            return cached;
+        }
+
+        const scoreText = thisObj.field("score").value;
+        if (!scoreText) {
+            return null;
+        }
+
+        try {
+            const countsText = instantiateObjectMethod.invoke(scoreText);
+            countsText.method("set_name", 1).invoke(Il2Cpp.string(COUNTS_OVERLAY_NAME));
+            tryAttachOverlay(scoreText, countsText);
+            try {
+                const baseSize = Number(scoreText.method("get_fontSize", 0).invoke() ?? 0);
+                if (baseSize > 0) {
+                    const small = Math.max(COUNTS_FONT_MIN_SIZE, Math.floor(baseSize * COUNTS_FONT_SCALE));
+                    countsText.method("set_fontSize", 1).invoke(small);
+                }
+            } catch {
+                // Keep default size.
+            }
+            tryOffsetOverlayWith(scoreText, countsText, COUNTS_OFFSET_Y);
+            tryEnableRichText(countsText);
+            safeSetText(countsText, "P:0  G:0  B:0  M:0");
+
+            countsTextState.set(key, countsText);
+            return countsText;
+        } catch (e) {
+            console.log(`[delta_t_display] create counts text failed: ${e}`);
+            return null;
+        }
+    }
+
     function setOverlay(thisObj: any, kind: JudgeKind, judgeTime?: number): void {
         const key = thisObj.handle.toString();
         const existing = overlayState.get(key);
@@ -330,6 +376,15 @@ Il2Cpp.perform(() => {
         if (accText) {
             const percent = computeAccuracy(this);
             safeSetText(accText, formatAccuracyText(percent));
+        }
+
+        const countsText = ensureCountsText(this);
+        if (countsText) {
+            const perfect = Number(this.field("perfect").value ?? 0);
+            const good = Number(this.field("good").value ?? 0);
+            const bad = Number(this.field("bad").value ?? 0);
+            const miss = Number(this.field("miss").value ?? 0);
+            safeSetText(countsText, formatCountsText(perfect, good, bad, miss));
         }
 
         const key = this.handle.toString();

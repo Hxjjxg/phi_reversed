@@ -1,3 +1,6 @@
+📦
+151461 /scripts/delta_t_display_hook/delta_t_display_bridge.js
+✄
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3356,6 +3359,10 @@ var require_delta_t_display_bridge = __commonJS({
     var ACC_OFFSET_Y = -54;
     var ACC_FONT_SCALE = 0.55;
     var ACC_FONT_MIN_SIZE = 16;
+    var COUNTS_OVERLAY_NAME = "CountsOverlayText";
+    var COUNTS_OFFSET_Y = -90;
+    var COUNTS_FONT_SCALE = 0.45;
+    var COUNTS_FONT_MIN_SIZE = 12;
     var JUDGE_CORE_WIDTH = 4;
     var JUDGE_OUTER_PAD = 2;
     var DELTA_T_YELLOW_MAX_MS = 80;
@@ -3420,6 +3427,9 @@ var require_delta_t_display_bridge = __commonJS({
       const normalized = safe > 0 && safe <= 1.0001 ? safe * 100 : safe;
       return `acc=${normalized.toFixed(2)}%`;
     }
+    function formatCountsText(perfect, good, bad, miss) {
+      return `<color=${DELTA_T_COLOR_YELLOW}>P:${perfect}</color>  <color=${DELTA_T_COLOR_BLUE}>G:${good}</color>  <color=${DELTA_T_COLOR_RED}>B:${bad}</color>  <color=${DELTA_T_COLOR_RED}>M:${miss}</color>`;
+    }
     function computeAccuracy(thisObj) {
       const good = Number(thisObj.field("good").value ?? 0);
       const perfect = Number(thisObj.field("perfect").value ?? 0);
@@ -3452,6 +3462,7 @@ var require_delta_t_display_bridge = __commonJS({
       const updateMethod = ScoreControl.method("Update", 0);
       const overlayState = /* @__PURE__ */ new Map();
       const accTextState = /* @__PURE__ */ new Map();
+      const countsTextState = /* @__PURE__ */ new Map();
       function tryAttachOverlay(referenceText, overlayText) {
         try {
           const referenceRect = referenceText.method("get_rectTransform", 0).invoke();
@@ -3563,6 +3574,38 @@ var require_delta_t_display_bridge = __commonJS({
           return null;
         }
       }
+      function ensureCountsText(thisObj) {
+        const key = thisObj.handle.toString();
+        const cached = countsTextState.get(key);
+        if (cached) {
+          return cached;
+        }
+        const scoreText = thisObj.field("score").value;
+        if (!scoreText) {
+          return null;
+        }
+        try {
+          const countsText = instantiateObjectMethod.invoke(scoreText);
+          countsText.method("set_name", 1).invoke(Il2Cpp.string(COUNTS_OVERLAY_NAME));
+          tryAttachOverlay(scoreText, countsText);
+          try {
+            const baseSize = Number(scoreText.method("get_fontSize", 0).invoke() ?? 0);
+            if (baseSize > 0) {
+              const small = Math.max(COUNTS_FONT_MIN_SIZE, Math.floor(baseSize * COUNTS_FONT_SCALE));
+              countsText.method("set_fontSize", 1).invoke(small);
+            }
+          } catch {
+          }
+          tryOffsetOverlayWith(scoreText, countsText, COUNTS_OFFSET_Y);
+          tryEnableRichText(countsText);
+          safeSetText(countsText, "P:0  G:0  B:0  M:0");
+          countsTextState.set(key, countsText);
+          return countsText;
+        } catch (e) {
+          console.log(`[delta_t_display] create counts text failed: ${e}`);
+          return null;
+        }
+      }
       function setOverlay(thisObj, kind, judgeTime) {
         const key = thisObj.handle.toString();
         const existing = overlayState.get(key);
@@ -3600,6 +3643,14 @@ var require_delta_t_display_bridge = __commonJS({
           const percent = computeAccuracy(this);
           safeSetText(accText, formatAccuracyText(percent));
         }
+        const countsText = ensureCountsText(this);
+        if (countsText) {
+          const perfect = Number(this.field("perfect").value ?? 0);
+          const good = Number(this.field("good").value ?? 0);
+          const bad = Number(this.field("bad").value ?? 0);
+          const miss = Number(this.field("miss").value ?? 0);
+          safeSetText(countsText, formatCountsText(perfect, good, bad, miss));
+        }
         const key = this.handle.toString();
         const state = overlayState.get(key);
         if (!state) {
@@ -3621,4 +3672,4 @@ var require_delta_t_display_bridge = __commonJS({
     });
   }
 });
-require_delta_t_display_bridge();
+export default require_delta_t_display_bridge();
