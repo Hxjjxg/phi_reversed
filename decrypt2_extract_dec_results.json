@@ -1,0 +1,197 @@
+{
+  "log_path": "log2.log",
+  "decrypt2_input_count": 5,
+  "decrypt2_output_count": 5,
+  "records": [
+    {
+      "module_index": 0,
+      "input": {
+        "id": "decrypt2_input_1776579147063_1204",
+        "tag": "decrypt2_input",
+        "time": "2026-04-19T06:12:27.063Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 0,
+        "len": 48,
+        "data_base64": "xxlbu1CK1nwKKT0RlvZMkAC91IYrvplf3uV1/zdxZTeYbZoVroAqm5m0LTcPok1/"
+      },
+      "output": {
+        "id": "decrypt2_output_1776579147063_1205",
+        "tag": "decrypt2_output",
+        "time": "2026-04-19T06:12:27.063Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 0,
+        "cipher_len": 48,
+        "cipher_base64": "xxlbu1CK1nwKKT0RlvZMkAC91IYrvplf3uV1/zdxZTeYbZoVroAqm5m0LTcPok1/",
+        "plain_len": 48,
+        "plain_base64": "Awdub3ZhIDRlAABAPwAAgD8AAIA/AACAPylcDz4AAIA/AAAAAAAAAAAAAAAAAAAA"
+      },
+      "dec_py_try": {
+        "cipher_len": 48,
+        "raw_decrypted_len": 48,
+        "raw_decrypted_base64": "CHgv729qazj5nMPf82mJ6a/+jz+x53dM7r+ebrXcxM+y4M/NPMwnIo8knlBUgsGV",
+        "raw_decrypted_utf8_preview": "\bx/�ojk8�����i����?��wLn���ϲ���<�'\"�$�PT���",
+        "pkcs7_unpad_ok": false,
+        "unpad_error": "Padding is incorrect."
+      },
+      "hook_plain_preview": {
+        "plain_len": 48,
+        "plain_utf8_preview": "\u0003\u0007nova 4e\u0000\u0000@?\u0000\u0000�?\u0000\u0000�?\u0000\u0000�?)\\\u000f>\u0000\u0000�?\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+        "plain_base64": "Awdub3ZhIDRlAABAPwAAgD8AAIA/AACAPylcDz4AAIA/AAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "module_index": 1,
+      "input": {
+        "id": "decrypt2_input_1776579147065_1206",
+        "tag": "decrypt2_input",
+        "time": "2026-04-19T06:12:27.065Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 1,
+        "len": 192,
+        "data_base64": "iomsZM2XRJq5tZsVZpZDID3NlbEbk3ygTpPQwln3z/hLZjZUJ2pfe6q5VFd85kb2uWgSBJsRZK1U6DN9zCnWOhtEkmYV/X42g7gcRM6ijWpDdcUIyCaqy0K/MIqP8vNO7DTePtO6outRMN2FqJoD4aMygdI78nBQGzX2ySPOStOtoBbnV23fwaDxOgk1f8JE7hJha4S8IKX81gEgm5ow0fjXGU0Qew+/iQBmFs2WBCgWZkpF1dMK6g6e2xDcCm6J"
+      },
+      "output": {
+        "id": "decrypt2_output_1776579147066_1207",
+        "tag": "decrypt2_output",
+        "time": "2026-04-19T06:12:27.066Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 1,
+        "cipher_len": 192,
+        "cipher_base64": "iomsZM2XRJq5tZsVZpZDID3NlbEbk3ygTpPQwln3z/hLZjZUJ2pfe6q5VFd85kb2uWgSBJsRZK1U6DN9zCnWOhtEkmYV/X42g7gcRM6ijWpDdcUIyCaqy0K/MIqP8vNO7DTePtO6outRMN2FqJoD4aMygdI78nBQGzX2ySPOStOtoBbnV23fwaDxOgk1f8JE7hJha4S8IKX81gEgm5ow0fjXGU0Qew+/iQBmFs2WBCgWZkpF1dMK6g6e2xDcCm6J",
+        "plain_len": 192,
+        "plain_base64": "AaQBVGhlcmUgaXMgYSBzZWxmLWludHJvZHVjdGlvbiwgd3JpdGUgc29tZXRoaW5nIGp1c3QgbGlrZToNClR3aXR0ZXI6IEBQaGlncm9zX1BHUw0KWW91VHViZTogUGlnZW9uIEdhbWVzDQoNCkhvcGUgeW91IGhhdmUgZnVuIGluIFBoaWdyb3MuDQpCZXN0IHJlZ2FyZHMsDQpQaWdlb24gR2FtZXMADEludHJvZHVjdGlvbgAAAAAAAAAAAAAA"
+      },
+      "dec_py_try": {
+        "cipher_len": 192,
+        "raw_decrypted_len": 192,
+        "raw_decrypted_base64": "2X5pHoGgk24GkM/uQ+fAJe77jCxag8ouTy6Vv8MvEE1qKScDaqrKDB72WvK8xHqTlxxHgHP8JsyprIKx+HYcXZ0lanrMs+PbxeMj8jctq8aGFH4NlPK1qEGUrnODAnAnC0wfdkJujSR12DNHyGUCIC0q44BpM9WMkPb8g1K2NiIzM8Kz/NlIWqqAFNKbhS4cTszmtK0lpkAI8SfP/CnofvbHwOpVTTpLntNwxAPvWN8wxjk30rY5t/KAVTVpP8EM",
+        "raw_decrypted_utf8_preview": "�~i\u001e���n\u0006���C��%���,Z��.O.���/\u0010Mj)'\u0003j��\f\u001e�Z��z��\u001cG�s�&̩����v\u001c]�%jz̳����#�7-�Ɔ\u0014~\r��A��s�\u0002p'\u000bL\u001fvBn�$u�3G�e\u0002 -*�i3Ռ����R�6\"...",
+        "pkcs7_unpad_ok": false,
+        "unpad_error": "PKCS#7 padding is incorrect."
+      },
+      "hook_plain_preview": {
+        "plain_len": 192,
+        "plain_utf8_preview": "\u0001�\u0001There is a self-introduction, write something just like:\r\nTwitter: @Phigros_PGS\r\nYouTube: Pigeon Games\r\n\r\nHope you ha...",
+        "plain_base64": "AaQBVGhlcmUgaXMgYSBzZWxmLWludHJvZHVjdGlvbiwgd3JpdGUgc29tZXRoaW5nIGp1c3QgbGlrZToNClR3aXR0ZXI6IEBQaGlncm9zX1BHUw0KWW91VHViZTogUGlnZW9uIEdhbWVzDQoNCkhvcGUgeW91IGhhdmUgZnVuIGluIFBoaWdyb3MuDQpCZXN0IHJlZ2FyZHMsDQpQaWdlb24gR2FtZXMADEludHJvZHVjdGlvbgAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "module_index": 2,
+      "input": {
+        "id": "decrypt2_input_1776579147067_1208",
+        "tag": "decrypt2_input",
+        "time": "2026-04-19T06:12:27.067Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 2,
+        "len": 32,
+        "data_base64": "BwoPJYLyOjd7b7mEDUR1Fakr+EPF6YrQL0dj9bK/uYY="
+      },
+      "output": {
+        "id": "decrypt2_output_1776579147067_1209",
+        "tag": "decrypt2_output",
+        "time": "2026-04-19T06:12:27.067Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 2,
+        "cipher_len": 32,
+        "cipher_base64": "BwoPJYLyOjd7b7mEDUR1Fakr+EPF6YrQL0dj9bK/uYY=",
+        "plain_len": 32,
+        "plain_base64": "DwAEAAC7Bb4BAAAABAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      },
+      "dec_py_try": {
+        "cipher_len": 32,
+        "raw_decrypted_len": 32,
+        "raw_decrypted_base64": "leNXN6jqLM6p5b0RCkV2rTPIPwNjHg8VvOnFR60z0oI=",
+        "raw_decrypted_utf8_preview": "��W7��,Ω�\u0011\nEv�3�?\u0003c\u001e\u000f\u0015���G�3҂",
+        "pkcs7_unpad_ok": false,
+        "unpad_error": "Padding is incorrect."
+      },
+      "hook_plain_preview": {
+        "plain_len": 32,
+        "plain_utf8_preview": "\u000f\u0000\u0004\u0000\u0000�\u0005�\u0001\u0000\u0000\u0000\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+        "plain_base64": "DwAEAAC7Bb4BAAAABAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      }
+    },
+    {
+      "module_index": 3,
+      "input": {
+        "id": "decrypt2_input_1776579147073_1210",
+        "tag": "decrypt2_input",
+        "time": "2026-04-19T06:12:27.073Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 3,
+        "len": 1248,
+        "data_base64": "c1a3LP9uDHQtC+DaWQvp8JVH5rsTa92ayn5KeijWA007s7/Z4jYCyDMVwcse/4dDJs/iiRcieOSr7i6ejyrrx3TZwLEGVpSDLT1axgUsGBW6O+idre82r7xjfQ/ea2FgE6vNga55Idi/7GZnmHiQo2BIY9wwu4+xa9rR3ugBAJQFOI/kWKXvgSll8jUMNpo+HyvBTi5C9YGmws27SMhadaeZ5d1u7AecwQdJz/+sFYN1FP89boIRbXS3KZMc/IKWxMHXxUZ5ZUlJe+NzUxKveG7WHxPhBk80oFxzGUCNK750e8xgV7EAyMSKjy4iH2k1HLQGbdlz8VzJD7lO1PqrC0lt2kHtLWdnhl4rmtaIAyeXC4W/OvAAAaV+kpRqkvmrPILlX7ZPggwZzp2KJG31OgO/gLLZZ9SbZKbARCuMIKqaAD+nSO+PmCw9rjgsXELeRYQNdA0+IM6CasvQ8HQY23j13NNz2FvU6VuexNX69HR/P3DbzbIBRZjhRHdVcDZDGjr4TpdT46wjamLbgdkQos4rtDmp29HO6HQJ8tbP18ANOwmqB2tD84lDREiOQpt1Gd369OaO4f4z7qQY4Zw7X2idJIOT4MUSUHaBtxzeajPqvN9ZciBReC82ztC45TEX2KnW3qdjixt/1myCNDWx9Efa6lFz+XEkTPA0y7gKA8nBQJFMs6vqUNEkWd6EOwhgcA85Fxmz1rsy1Rceinp4PfR67LXmV8yJ3P7NzP3vYVR8VGE20TKeoP352+4Bm8inVbR/lDyC+HH5V/vFlqBCa5w2iahlOkMC9i/vXQhHi28F31TV/jYC7LId1GX09Ao9aiTvStE6F4/TNk6aPe4LxTez7HcruZjDsirp8amfUa9od4Bl0wc0rfUe1PnNQHRCm9VhCx4fzGK1RNvI8yrBoGM7jSuQzuE3PBdZ3jjllwsafgS2vyL9pd8kuCwF1W+nBik4HjnB3MUxIMjd5jyYVNFbAg32jxMvrG1ZVz18yKHonaWCiH4ZzZicy66z4lmeLL/LFtdWnBZtLDYVe6amTYE74lqC/mZr9pfklB04oaWvtISn49fWxGcOM5q28PbUGfN8lEbnYUclsqLoiCtB/1ipQehYER9pxc1VFHFuSzFD2XfKvNmqy0AZMgeg8NzWnjlqlZ7tvWPHA+blUVDOym98W3KcPGHoDelCWYgBWAAksq58QK+UWw5nrQmZLLSzV3blCtQP1WEwAF8uxtdEThBPZf+NvUW43poL3k71Kn1UEk/v/r0MB34ecC0n/jBWWDieBbvPi4V7TTAFV3HMwTkI8+QiC2F1sHJKsJFxeOuR6liGwxxwBXjFMuT/qMgvVGVH0cYKERFfvdPaQWXnGoerKFI0GfXMSZVREVknPV0gZXBShHGnUKI/s0dX4CLAt1dI/D3KaE8kPW5CDhgnJfrDUGcvMRF5nu6Z8KVLRNVuFGbISr7fn96cmgQ2asbz+d5/pveGUA1kWhZD0hZDCElP2sagw83X2GR2tKc3xnsRIUgyOWlHvgYAIr1+jr5fPIEIPfR8Ty6gy4dwUj5BzhR5uEG1OX+f3ibMAKO0Lja63Q+RECXPFOBVNbwNefwa3+mRk1A1Tz/QbpJUqMZtie1fJ6+iHOgQpAZs4nTmyheQGS/s3mKXjhFUAH5oQrtc"
+      },
+      "output": {
+        "id": "decrypt2_output_1776579147080_1211",
+        "tag": "decrypt2_output",
+        "time": "2026-04-19T06:12:27.080Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 3,
+        "cipher_len": 1248,
+        "cipher_base64": "c1a3LP9uDHQtC+DaWQvp8JVH5rsTa92ayn5KeijWA007s7/Z4jYCyDMVwcse/4dDJs/iiRcieOSr7i6ejyrrx3TZwLEGVpSDLT1axgUsGBW6O+idre82r7xjfQ/ea2FgE6vNga55Idi/7GZnmHiQo2BIY9wwu4+xa9rR3ugBAJQFOI/kWKXvgSll8jUMNpo+HyvBTi5C9YGmws27SMhadaeZ5d1u7AecwQdJz/+sFYN1FP89boIRbXS3KZMc/IKWxMHXxUZ5ZUlJe+NzUxKveG7WHxPhBk80oFxzGUCNK750e8xgV7EAyMSKjy4iH2k1HLQGbdlz8VzJD7lO1PqrC0lt2kHtLWdnhl4rmtaIAyeXC4W/OvAAAaV+kpRqkvmrPILlX7ZPggwZzp2KJG31OgO/gLLZZ9SbZKbARCuMIKqaAD+nSO+PmCw9rjgsXELeRYQNdA0+IM6CasvQ8HQY23j13NNz2FvU6VuexNX69HR/P3DbzbIBRZjhRHdVcDZDGjr4TpdT46wjamLbgdkQos4rtDmp29HO6HQJ8tbP18ANOwmqB2tD84lDREiOQpt1Gd369OaO4f4z7qQY4Zw7X2idJIOT4MUSUHaBtxzeajPqvN9ZciBReC82ztC45TEX2KnW3qdjixt/1myCNDWx9Efa6lFz+XEkTPA0y7gKA8nBQJFMs6vqUNEkWd6EOwhgcA85Fxmz1rsy1Rceinp4PfR67LXmV8yJ3P7NzP3vYVR8VGE20TKeoP352+4Bm8inVbR/lDyC+HH5V/vFlqBCa5w2iahlOkMC9i/vXQhHi28F31TV/jYC7LId1GX09Ao9aiTvStE6F4/TNk6aPe4LxTez7HcruZjDsirp8amfUa9od4Bl0wc0rfUe1PnNQHRCm9VhCx4fzGK1RNvI8yrBoGM7jSuQzuE3PBdZ3jjllwsafgS2vyL9pd8kuCwF1W+nBik4HjnB3MUxIMjd5jyYVNFbAg32jxMvrG1ZVz18yKHonaWCiH4ZzZicy66z4lmeLL/LFtdWnBZtLDYVe6amTYE74lqC/mZr9pfklB04oaWvtISn49fWxGcOM5q28PbUGfN8lEbnYUclsqLoiCtB/1ipQehYER9pxc1VFHFuSzFD2XfKvNmqy0AZMgeg8NzWnjlqlZ7tvWPHA+blUVDOym98W3KcPGHoDelCWYgBWAAksq58QK+UWw5nrQmZLLSzV3blCtQP1WEwAF8uxtdEThBPZf+NvUW43poL3k71Kn1UEk/v/r0MB34ecC0n/jBWWDieBbvPi4V7TTAFV3HMwTkI8+QiC2F1sHJKsJFxeOuR6liGwxxwBXjFMuT/qMgvVGVH0cYKERFfvdPaQWXnGoerKFI0GfXMSZVREVknPV0gZXBShHGnUKI/s0dX4CLAt1dI/D3KaE8kPW5CDhgnJfrDUGcvMRF5nu6Z8KVLRNVuFGbISr7fn96cmgQ2asbz+d5/pveGUA1kWhZD0hZDCElP2sagw83X2GR2tKc3xnsRIUgyOWlHvgYAIr1+jr5fPIEIPfR8Ty6gy4dwUj5BzhR5uEG1OX+f3ibMAKO0Lja63Q+RECXPFOBVNbwNefwa3+mRk1A1Tz/QbpJUqMZtie1fJ6+iHOgQpAZs4nTmyheQGS/s3mKXjhFUAH5oQrtc",
+        "plain_len": 1248,
+        "plain_base64": "HRZHbGFjaWF4aW9uLlN1bnNldFJheS4wCgEAluwHAC+6XkIdRXJhZGljYXRpb25DYXRhc3Ryb3BoZS5OY2VTLjAKAgCgBg4AmpnDQg9DcmVkaXRzLkZydW1zLjAaDgJ0LQ8AH9HGQmOGDgD//8NCGoUNAB5lv0IlRW5naW5leFN0YXJ0bWVsb2R5bWl4LkNyb3NzaW5nU291bmQuMBIGBIZgDgBVLcFC1SUPADfkxkIP5YWJLuWnnOexs+ainS4wEgYAm4EOAOy6xEIUuQ4AnybEQhtXaW50ZXJjdWJlLkN0eW1heGZlYXROY2VTLjASBgA9eA4Al/jEQu7sDgBBicdCIUNpcGhlcjIwLlRldHJhamVjdG9yeWZlYXRDdHltYXguMAoCAAgLDgBv68NCIua3t+S5sUNvbmZ1c2lvbi5Pbmx5TXlCbGFja1Njb3JlLjASBgKoLQ8AFtTGQiUNDgAVGMRCGEZVTGlBVVRPU0hPT1RFUi5NWVVLS0UuMAoCAEXdCgBjSJZCD1BSQVcuQmx1ZXdpbmQuMAoEAE7ODQDrusNCGFBpeGVsUmViZWx6Lk5vcm1hbDF6ZXIuMBIGAE98DgDu+sVCUkUOAM+5xUIjTm9uTWVsb2RpY1JhZ2V6TVVHRWRpdC5Ob3JtYWwxemVyLjAKAgBNAQ4A/jbFQiJDbGFzc01lbW9yaWVzLkFudGlzdGFyZmVhdEN0eW1heC4wEgYAVGkOABiTxUJZpQ4AFpnHQh5FTkVSR1lTWU5FUkdZTUFUUklYLlRhbmNoaWt5LjAKBAB1OQ4AYCzFQhdOWUEuRkx1b1JpVGXlp5znsbPmop0uMAoCAMJzDgD0zsFCKEp1blhpb25CZXR3ZWVuTGlmZUFuZERlYXRoVklQTWl4LjFONkZzLjAKAgKHEg8A9kjFQgxjcnlvdXQuSnVFLjASBgDGmw4AFpTEQtYTDwBqU8dCD1JlaW1laS7lvbHomY4uMBIGAEQuDgD2RcRC22kOAMD5xUIV5bCK5birVGhlR3VydS5yaWRlci4wCgQAyGwOAErUxEInU3Bhc21vZGljLuWnnOexs+ainemitumiqOWFg+WKm+S4iuS6ui4wCgQAmQgOAPoExUIVZEJkb2xsLllVRVNURVZFTnVlbi4wCgQAWrYNAPBqwUIT54uC5Zac6Jit6IieLkxlYUYuMAoCABAqDgCPX8VCHlRoZU1vdW50YWluRWF0ZXIuUGF1bEJhem9va2EuMAoEACsgDgAgccRCE0JyZWFrT3Zlci5LZm9yZXN0LjAaDgCG5Q4AXkXHQuFLDgCv5sVCVNQOACmvxUIx44Gx44G044G344G044G344G044GxLuOBk+OCjeOBreOBveOBoVdpdGjnq4vnp4suMBIGACGaDgB8QcdCAOgNAG12w0Ia5ZCb5b6A5L2V5aSEUXVvVmFkaXMuTTJVLjASBgLxOw8AGqTHQro3DgBB48RCH0FwaHJvZGl0ZXNDaGlsZHNob3J0dmVyLlJVUU9BLjASBgAglw4AGfPDQo9NDgCEY8VCG0RldklBdGlPbnNob3J0dmVyLnBvbHlzaGEuMAoEAH19DgAohcVCE0hlbGlvcy5OT0FCb3RhTnlhLjASBgBekw4APDzGQlOJDgBl/cVCAAAAAAAA"
+      },
+      "dec_py_try": {
+        "cipher_len": 1248,
+        "raw_decrypted_len": 1248,
+        "raw_decrypted_base64": "KEuSqYlxweNKGwvIh5L3/JxV/2qpUyOvp2S6WAlpVMzi0vmUOiz+ZgZJrSBI0HyUo4lDXiENgM9RFj0nuU+m7bLhCobmy3EpwjXJpbchWiXOlCqcQStvNdHgk5czy0EUBBlkSXT+GKAorQF9lPL5ZtzGllKiuFoyEvVoA2JiH0QNnPuilPHBXfPRRXHk01HUGdsteM/RAk2Na5PmsrIYfGiwjdU83ZFwOc3GLkuS+z4YEfkhosxL0KaTKoWiP/wabUbY5fd0PHDPDGyK/vKHi96dQw79AvI0BMHplHxBm/hShqAMIA8mUr7hsoH5B26UazkINW7ajyMJYL4W2JVSZoYA7d0HJnrwSw7rcFqLD1K/W5zm7hl+jbBHLqfRY1/tFkeLzcTBQhMmSqB1IN0dgpg6DpXOjFtEDpc0kO3cAxYMa+Qrgohi+9tUbYvONulHOK2IkhyqM9m2lcqW0wIFxDJAMXKMxCmnjRd/4/mpUhrs62qwglLqKMvgynBa7LBwUjIFYv1TD52pTVq+/ekwW0kdN9yNsPJDP7uBhCcbi4dQXc1A46PGnZZyLB+e1/cpgw4qu0LQ6pPOR3PBDtG1+nu0mA7ZHfBJy63IqrezqDHPVnZKKHCFg7KsjUYpXXYqHzgJfF6wbWtEmnN6jfYJdZ9YnM5vUPSgdi2VNpsyHbyWdsOJCZMcgklZXt2oZjDKDnLzzmhwSOWWiQjLeAO3sVE5fOcNYzN3mt0KlxHzKCKL8NDF8Vc8dan6KQ2VQYnnxzrdUCNPma+mmD8qW/BHjfUccW5ShCUbnPauVMcX6A3QQFzRz/fF61JPsu7wuVY5X5eSxp52yYBmlD4YLwEx4Ww/1yjw1HOgld7C+L/wfQUeYYqAyS6CGtVyo4q4tG3M2UhroPpE2iju008xwSOhdICU243p2OTARRoJ263qZnFkLzRiHrH+hvge2NJGJabojIrhSz13NIoL86g1+e07GxKawVD0tiX/zQUwraXhUfqk3k0b2mfD6lzhhRlK7t2Qngxmx2c7xbPTgLYqmm9iFyPHgFxeC3xsFnHnOXmy8gbKe5uzwfEe76yNfgRujsrmNrJiTAyedeSIy43rgJzKkbvWiZYA4x8FOuEJcJHbOxetC/pQGnUzluW5KN0k2QawhRImjE3Z7mdOixPctjWaQsDE0Td2TIsFZWMQ7vR+pHEvxZ8/65QtfqGbUvTAhrjR/fosT29dklqGkXN64JM+6gJPFJF5wlJySEKa+aXxUlLuNBJ13Zuh9tMO84jfR7zf9fdqLg1U2JdraO6I5CES7A6WknZ1z41EtkxTmZ0Ha3Z1oVago8kG4GzqHH/SgoELBPdTIdp0G9MDda15JVeyZ/IAbl2ScFeo+SeghhbXvScP2JAqNYqqNKleM10Hb9eMqugK2dWzoaQar+K2RQ0HHXwbgE2wyUUIt5qxYie6jCtVpaG2oC8muaEShtiEN/Xjlua3uQmVV6jSP/BLBqyLhaEiavJwNLETUkABlziFXrCp1nzmHONI3qq9+xGs9IoTgJPJjpwjJadwiByRQLpn9GUQHmTGGYWeGcEnSqVQNbhVgWLa2yl2DgFurj62mDKvd6bHxspFm+SmwQ2BL/Ic31zquGwRiCUQf9CR0lTxG379GiiSd22dstWZIXOGEig3",
+        "raw_decrypted_utf8_preview": "(K���q��J\u001b\u000bȇ����U�j�S#��d�X\tiT�����:,�f\u0006I� H�|���C^!\r��Q\u0016='�O����\n���q)�5ɥ�!Z%Δ*�A+o5����3�A\u0014\u0004\u0019dIt�\u0018�(�\u0001}���f�ƖR��Z2\u0012�h\u0003...",
+        "pkcs7_unpad_ok": false,
+        "unpad_error": "Padding is incorrect."
+      },
+      "hook_plain_preview": {
+        "plain_len": 1248,
+        "plain_utf8_preview": "\u001d\u0016Glaciaxion.SunsetRay.0\n\u0001\u0000��\u0007\u0000/�^B\u001dEradicationCatastrophe.NceS.0\n\u0002\u0000�\u0006\u000e\u0000���B\u000fCredits.Frums.0\u001a\u000e\u0002t-\u000f\u0000\u001f��Bc�\u000e\u0000���B\u001a�\r\u0000\u001ee�B%...",
+        "plain_base64": "HRZHbGFjaWF4aW9uLlN1bnNldFJheS4wCgEAluwHAC+6XkIdRXJhZGljYXRpb25DYXRhc3Ryb3BoZS5OY2VTLjAKAgCgBg4AmpnDQg9DcmVkaXRzLkZydW1zLjAaDgJ0LQ8AH9HGQmOGDgD//8NCGoUNAB5lv0IlRW5naW5leFN0YXJ0bWVsb2R5bWl4LkNyb3NzaW5nU291bmQuMBIGBIZgDgBVLcFC1SUPADfkxkIP5YWJLuWnnOexs+ainS4wEgYAm4EOAOy6xEIUuQ4AnybEQhtXaW50ZXJjdWJlLkN0eW1heGZlYXROY2VTLjASBgA9eA4Al/jEQu7sDgBBicdCIUNpcGhlcjIwLlRldHJhamVjdG9yeWZlYXRDdHltYXguMAoCAAgLDgBv68NCIua3t+S5sUNvbmZ1c2lvbi5Pbmx5TXlCbGFja1Njb3JlLjASBgKoLQ8AFtTGQiUNDgAVGMRCGEZVTGlBVVRPU0hPT1RFUi5NWVVLS0UuMAoCAEXdCgBjSJZCD1BSQVcuQmx1ZXdpbmQuMAoEAE7ODQDrusNCGFBpeGVsUmViZWx6Lk5vcm1hbDF6ZXIuMBIGAE98DgDu+sVCUkUOAM+5xUIjTm9uTWVsb2RpY1JhZ2V6TVVHRWRpdC5Ob3JtYWwxemVyLjAKAgBNAQ4A/jbFQiJDbGFzc01lbW9yaWVzLkFudGlzdGFyZmVhdEN0eW1heC4wEgYAVGkOABiTxUJZpQ4AFpnHQh5FTkVSR1lTWU5FUkdZTUFUUklYLlRhbmNoaWt5LjAKBAB1OQ4AYCzFQhdOWUEuRkx1b1JpVGXlp5znsbPmop0uMAoCAMJzDgD0zsFCKEp1blhpb25CZXR3ZWVuTGlmZUFuZERlYXRoVklQTWl4LjFONkZzLjAKAgKHEg8A9kjFQgxjcnlvdXQuSnVFLjASBgDGmw4AFpTEQtYTDwBqU8dCD1JlaW1laS7lvbHomY4uMBIGAEQuDgD2RcRC22kOAMD5xUIV5bCK5birVGhlR3VydS5yaWRlci4wCgQAyGwOAErUxEInU3Bhc21vZGljLuWnnOexs+ainemitumiqOWFg+WKm+S4iuS6ui4wCgQAmQgOAPoExUIVZEJkb2xsLllVRVNURVZFTnVlbi4wCgQAWrYNAPBqwUIT54uC5Zac6Jit6IieLkxlYUYuMAoCABAqDgCPX8VCHlRoZU1vdW50YWluRWF0ZXIuUGF1bEJhem9va2EuMAoEACsgDgAgccRCE0JyZWFrT3Zlci5LZm9yZXN0LjAaDgCG5Q4AXkXHQuFLDgCv5sVCVNQOACmvxUIx44Gx44G044G344G044G344G044GxLuOBk+OCjeOBreOBveOBoVdpdGjnq4vnp4suMBIGACGaDgB8QcdCAOgNAG12w0Ia5ZCb5b6A5L2V5aSEUXVvVmFkaXMuTTJVLjASBgLxOw8AGqTHQro3DgBB48RCH0FwaHJvZGl0ZXNDaGlsZHNob3J0dmVyLlJVUU9BLjASBgAglw4AGfPDQo9NDgCEY8VCG0RldklBdGlPbnNob3J0dmVyLnBvbHlzaGEuMAoEAH19DgAohcVCE0hlbGlvcy5OT0FCb3RhTnlhLjASBgBekw4APDzGQlOJDgBl/cVCAAAAAAAA"
+      }
+    },
+    {
+      "module_index": 4,
+      "input": {
+        "id": "decrypt2_input_1776579147087_1212",
+        "tag": "decrypt2_input",
+        "time": "2026-04-19T06:12:27.087Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 4,
+        "len": 608,
+        "data_base64": "lTiTNIuc5RGcWz6wPGKrSImDIU8a+aLiI8Sy7jpnRcKUoTxiqhRq1ARJiz/ZFibiK4ypmyMDIoBqy+Y/bUQpp4ALDKDdUsNx0ZOkHuroJhiuymIx+zGRny0EoQfDyZEukmi9U5/gyq9cSyu0R9lVDBF/Pgla7mu/sbH6RC7pcMqnIsri8Dbd7jPUL4Z0ulvlvh8atnW9/Xf3xbALMRpC0wIyWsfUgfv1DUyM/ox0o1NHQGsBpXvKwjgCjeR0/X/EC2bTdcVuVtVe//EvczuD0nMuFF3YDzktGLLxYvXg5SSPPWVEaM3cu4Sz4pcoanKH9AJE+SCe78nCHdBT/dry3nCGl2BrkMXSb774TKCDbJWn3QEoUr8mcHR7AqWDl0dZfRy4KyKHvi25ED1o+3FU7mEK5cWExdqnuVh5UWTCu+z3WBZep0KdOp/Yd7ibZRuJ5VUpS1x+goZI9mIW+sepWcFm/WAGE0c6zM9Fj+bL7lqz1V1y10H9q6DBiU+oMlXsytX+HS4tkKw6tszF1s2L+9fCAmZUBXd6EymmVEpxwngmDois1sDsRQDr4Ro28/lHk2SoGs0HdDgpn1+4pIoZDeLLq5exiLpZ3bjX81Cq0XeIulN4vKQoUaC17sVQjjUbQv1PASJS5KxVrb5R+WxQ83Qk1eIq0TF9C2gCjCNSjOvLFMIpbgDbJ2quj+AoPBkZ5/MM+ddJYaq973EkE4+vMU1xrU5guVzum4dVRAb0xu3Tt7Y8Ptd+Fzv6BvCjU3Brx/FT5lmEUHaqoASUTwGSaM50UbB9VfS+qyCIkwBzdAM="
+      },
+      "output": {
+        "id": "decrypt2_output_1776579147091_1213",
+        "tag": "decrypt2_output",
+        "time": "2026-04-19T06:12:27.091Z",
+        "folder": "/storage/emulated/0/Android/data/com.PigeonGames.Phigros/cache/save/",
+        "save_ver": 6,
+        "module_index": 4,
+        "cipher_len": 608,
+        "cipher_base64": "lTiTNIuc5RGcWz6wPGKrSImDIU8a+aLiI8Sy7jpnRcKUoTxiqhRq1ARJiz/ZFibiK4ypmyMDIoBqy+Y/bUQpp4ALDKDdUsNx0ZOkHuroJhiuymIx+zGRny0EoQfDyZEukmi9U5/gyq9cSyu0R9lVDBF/Pgla7mu/sbH6RC7pcMqnIsri8Dbd7jPUL4Z0ulvlvh8atnW9/Xf3xbALMRpC0wIyWsfUgfv1DUyM/ox0o1NHQGsBpXvKwjgCjeR0/X/EC2bTdcVuVtVe//EvczuD0nMuFF3YDzktGLLxYvXg5SSPPWVEaM3cu4Sz4pcoanKH9AJE+SCe78nCHdBT/dry3nCGl2BrkMXSb774TKCDbJWn3QEoUr8mcHR7AqWDl0dZfRy4KyKHvi25ED1o+3FU7mEK5cWExdqnuVh5UWTCu+z3WBZep0KdOp/Yd7ibZRuJ5VUpS1x+goZI9mIW+sepWcFm/WAGE0c6zM9Fj+bL7lqz1V1y10H9q6DBiU+oMlXsytX+HS4tkKw6tszF1s2L+9fCAmZUBXd6EymmVEpxwngmDois1sDsRQDr4Ro28/lHk2SoGs0HdDgpn1+4pIoZDeLLq5exiLpZ3bjX81Cq0XeIulN4vKQoUaC17sVQjjUbQv1PASJS5KxVrb5R+WxQ83Qk1eIq0TF9C2gCjCNSjOvLFMIpbgDbJ2quj+AoPBkZ5/MM+ddJYaq973EkE4+vMU1xrU5guVzum4dVRAb0xu3Tt7Y8Ptd+Fzv6BvCjU3Brx/FT5lmEUHaqoASUTwGSaM50UbB9VfS+qyCIkwBzdAM=",
+        "plain_len": 608,
+        "plain_base64": "KgZIZWxpb3MDCgEBFeOBseOBtOOBt+OBtOOBt+OBtOOBsQMKAQEKQnJlYWsgT3ZlcgMKAQESVGhlIE1vdW50YWluIEVhdGVyAgIBDOeLguWWnOiYreiIngICAQdkQiBkb2xsAxIBAQhzaGlqaWFuMAMFAQEIc2hpamlhbjEDBQEBCHNoaWppYW4yAwUBAQhzaGlqaWFuMwMFAQEIc2hpamlhbjQDBQEBCHNoaWppYW41AwUBAQhzaGlqaWFuNgMFAQEIc2hpamlhbjcDBQEBCHNoaWppYW44AwUBAQhzaGlqaWFuOQMFAQEEYWxwYQMFAQEJWXNoYW5mZW5nAwUBAQdZaHVvZ3VvAwUBAQpZaHVhbmd5aW5nAwUBAQhoYWlydGhlbwMFAQEHamlubmFuZwIEAQZZbGlnaHQDBQEBCHd1Y2Fpc2hpAwUBAQpqdXN0aWNlbWFvAgQBCXNoaWppYW4xMAMFAQEJc2hpamlhbjExAwUBAQlzaGlqaWFuMTIDBQEBCXNoaWppYW4xMwMFAQEJc2hpamlhbjE0AwUBAQlzaGlqaWFuMTUDBQEBCXNoaWppYW4xNgMFAQEJc2hpamlhbjE3AwUBAQlzaGlqaWFuMTgCBAEJc2hpamlhbjE5AwUBAQlzaGlqaWFuMjACBAEJc2hpamlhbjIxAgQBCXNoaWppYW4yMgIEAQlzaGlqaWFuMjMDBQEBCXNoaWppYW4yNAIEARjlkJvlvoDkvZXlpIQgKFF1byBWYWRpcykCCAEMSW50cm9kdWN0aW9uAhABAAAAAQAAAAAAAAAAAAA="
+      },
+      "dec_py_try": {
+        "cipher_len": 608,
+        "raw_decrypted_len": 608,
+        "raw_decrypted_base64": "Z8Ipw2ASUndiqViHyrDY12PgHC3wWr14MUnYCtULlEpnGiGpzcsgv5BQwzSF252fyWC4VoLcJkcRe9yAhBYpuUydiVuFwRbl0NPwx6stafCzIwFbutM2DsTwozRANxY9lXKOCEtGPWgov0fLPBfg9gHAS1PBmbEDs5iAF4I7SFmBQqHjxWpquP3SlEckpOvrzLZfwkJ1wtIaajWGXelP0K0udw+2SkBQDyrtm+Kw7MJhWidIwZXi5UbCwpBdwcjBPfT2EIACRg2B4Sh2VRvdlm5i0f5uJzWud+zRTAypHcM9aAQVsJ+LfJxs3fxGMMAucuIrNba1WRqsXmXDJuXoUYAT1PBVGTMtfjXzso5xsxag5tTTmsz7BjtrtcxXmh+2jNg2Bk3ndOSFQNb7Qr6FpLRGJZDa/YK86vNhcdlW1XFNDIkM+jpFk9voEbZFixfm+/u5A0ND5DiLy+yJY+CJ+rYycTfBC/wdoNyzEO70wP4hOfhEA2mrs0O6QLjTv1I5FJRwyX70wJKDQJXfbF0iO8Z9G4SuMmtMIsNLok3Z2fIndfbGOkkBswrbGErfjbYx34uMpFEAl4YEfp3i/ALTAZvBNr2HGhGeWSLnWSAIAwb6UP+u8tGDWatt1/rGcV+woSvchDnWSBG61bkCkaQ5gsTiE7QHELiXjyF35dRgRYSWpCFin1mBTZoB/XubrajCE/mAkc2sUi03WnZt0HJkoVP4Wv9qIl/jEub6vivPQ91rgR/vqcu/U/0Ub368bgY+iA9WeOXY41bJSvlnfgGN5pIYm1jB0UOSpZ+fLIYd69U=",
+        "raw_decrypted_utf8_preview": "g�)�`\u0012Rwb�X�ʰ��c�\u001c-�Z�x1I�\n�\u000b�Jg\u001a!��� ��P�4�۝��`�V��&G\u0011{܀�\u0016)�L��[��\u0016����ǫ-i�#\u0001[��6\u000e��4@7\u0016=�r�\bKF=h(�G�<\u0017��\u0001�KS���\u0003���\u0017�;...",
+        "pkcs7_unpad_ok": false,
+        "unpad_error": "Padding is incorrect."
+      },
+      "hook_plain_preview": {
+        "plain_len": 608,
+        "plain_utf8_preview": "*\u0006Helios\u0003\n\u0001\u0001\u0015ぱぴぷぴぷぴぱ\u0003\n\u0001\u0001\nBreak Over\u0003\n\u0001\u0001\u0012The Mountain Eater\u0002\u0002\u0001\f狂喜蘭舞\u0002\u0002\u0001\u0007dB doll\u0003\u0012\u0001\u0001\bshijian0\u0003\u0005\u0001\u0001\bshijian1\u0003\u0005\u0001\u0001\bshijian2\u0003\u0005\u0001\u0001...",
+        "plain_base64": "KgZIZWxpb3MDCgEBFeOBseOBtOOBt+OBtOOBt+OBtOOBsQMKAQEKQnJlYWsgT3ZlcgMKAQESVGhlIE1vdW50YWluIEVhdGVyAgIBDOeLguWWnOiYreiIngICAQdkQiBkb2xsAxIBAQhzaGlqaWFuMAMFAQEIc2hpamlhbjEDBQEBCHNoaWppYW4yAwUBAQhzaGlqaWFuMwMFAQEIc2hpamlhbjQDBQEBCHNoaWppYW41AwUBAQhzaGlqaWFuNgMFAQEIc2hpamlhbjcDBQEBCHNoaWppYW44AwUBAQhzaGlqaWFuOQMFAQEEYWxwYQMFAQEJWXNoYW5mZW5nAwUBAQdZaHVvZ3VvAwUBAQpZaHVhbmd5aW5nAwUBAQhoYWlydGhlbwMFAQEHamlubmFuZwIEAQZZbGlnaHQDBQEBCHd1Y2Fpc2hpAwUBAQpqdXN0aWNlbWFvAgQBCXNoaWppYW4xMAMFAQEJc2hpamlhbjExAwUBAQlzaGlqaWFuMTIDBQEBCXNoaWppYW4xMwMFAQEJc2hpamlhbjE0AwUBAQlzaGlqaWFuMTUDBQEBCXNoaWppYW4xNgMFAQEJc2hpamlhbjE3AwUBAQlzaGlqaWFuMTgCBAEJc2hpamlhbjE5AwUBAQlzaGlqaWFuMjACBAEJc2hpamlhbjIxAgQBCXNoaWppYW4yMgIEAQlzaGlqaWFuMjMDBQEBCXNoaWppYW4yNAIEARjlkJvlvoDkvZXlpIQgKFF1byBWYWRpcykCCAEMSW50cm9kdWN0aW9uAhABAAAAAQAAAAAAAAAAAAA="
+      }
+    }
+  ]
+}

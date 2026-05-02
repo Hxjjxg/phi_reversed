@@ -1,12 +1,6 @@
 import "frida-il2cpp-bridge";
 
 declare const Il2Cpp: any;
-declare const Process: any;
-declare const Memory: any;
-declare const Arm64Writer: any;
-declare const ptr: any;
-
-type NativePointer = any;
 
 type NoteSpritePathSet = {
     click: string;
@@ -31,14 +25,6 @@ type HoldTailMode = 1 | 2 | 3;
 const HOLD_TAIL_MODE_NONE: HoldTailMode = 1;
 const HOLD_TAIL_MODE_SHARED: HoldTailMode = 2;
 const HOLD_TAIL_MODE_SEPARATE: HoldTailMode = 3;
-
-// Native code caves are unstable on some devices because anonymous pages may
-// not be executable under current SELinux policy. Keep disabled by default and
-// use managed fallback hook instead.
-const ENABLE_NATIVE_CODE_CAVE = false;
-
-const ARM64_B_MIN = -0x08000000n;
-const ARM64_B_MAX = 0x07fffffcn;
 
 // 1: do not use hold tail
 // 2: normal/multi share hold_end.png
@@ -66,11 +52,10 @@ const NOTE_TEXTURES: { normal: NoteSpritePathSet; multi: NoteSpritePathSet } = {
 
 const FridaFile = (globalThis as any).File;
 const spriteCache = new Map<string, any>();
-const pinnedSpriteHandles = new Set<string>();
+const pinnedManagedHandles = new Set<string>();
 const pinnedGcHandles: any[] = [];
 let unityObjectClassCache: any | null = null;
 let unityObjectImplicitMethodCache: any | null = null;
-let forcedSeparateTailRebuildCount = 0;
 
 function isEngineAliveUnityObject(obj: any): boolean {
     try {
@@ -123,13 +108,25 @@ function isLiveUnityObject(obj: any): boolean {
     }
 }
 
-function pinManagedObject(obj: any, tag: string): void {
-    if (!isLiveUnityObject(obj)) {
+function hasManagedHandle(obj: any): boolean {
+    if (!obj) {
+        return false;
+    }
+
+    try {
+        return !!obj.handle;
+    } catch {
+        return false;
+    }
+}
+
+function pinManagedReference(obj: any, tag: string): void {
+    if (!hasManagedHandle(obj)) {
         return;
     }
 
     const key = obj.handle?.toString?.();
-    if (!key || pinnedSpriteHandles.has(key)) {
+    if (!key || pinnedManagedHandles.has(key)) {
         return;
     }
 
@@ -137,7 +134,7 @@ function pinManagedObject(obj: any, tag: string): void {
         const GCHandle = Il2Cpp.corlib.class("System.Runtime.InteropServices.GCHandle");
         const handle = GCHandle.method("Alloc").overload("System.Object").invoke(obj);
         pinnedGcHandles.push(handle);
-        pinnedSpriteHandles.add(key);
+        pinnedManagedHandles.add(key);
     } catch (e) {
         console.log(`[note-texture] GCHandle pin failed (${tag}): ${e}`);
     }
@@ -274,6 +271,7 @@ function createCustomSprite(imagePath: string, templateSprite: any = null): any 
 
     const texture = Texture2D.alloc();
     texture.method(".ctor").overload("System.Int32", "System.Int32").invoke(2, 2);
+    pinManagedReference(texture, `texture:${imagePath}`);
 
     const loaded = ImageConversion.method("LoadImage")
         .overload("UnityEngine.Texture2D", "System.Byte[]")
@@ -320,7 +318,7 @@ function getOrCreateSprite(cacheKey: string, imagePath: string, templateSprite: 
         spriteCache.set(cacheKey, sprite);
     }
 
-    pinManagedObject(sprite, cacheKey);
+    pinManagedReference(sprite, cacheKey);
 
     return sprite;
 }
@@ -512,46 +510,10 @@ function tryGetParentLevelControl(uiChange: any, levelControlClass: any): any | 
     return levelControl;
 }
 
-function pointerToBigInt(address: NativePointer): bigint {
-    return BigInt(address.toString());
-}
-
-function isArm64BReachable(from: NativePointer, to: NativePointer): boolean {
-    const delta = pointerToBigInt(to) - pointerToBigInt(from);
-    return delta >= ARM64_B_MIN && delta <= ARM64_B_MAX && (delta & 0x3n) === 0n;
-}
-
-function allocCaveNear(hookAddr: NativePointer): NativePointer {
-    const nearOptions = {
-        near: hookAddr,
-        maxDistance: Number(ARM64_B_MAX)
-    };
-
-    try {
-        return (Memory as any).alloc(Process.pageSize, nearOptions);
-    } catch (e) {
-        console.log(`[note-texture] near cave alloc failed, fallback to default alloc: ${e}`);
-        return Memory.alloc(Process.pageSize);
-    }
-}
-
 Il2Cpp.perform(() => {
-    Process.setExceptionHandler((details: any) => {
-        try {
-            const pc = details?.context?.pc;
-            const lr = details?.context?.lr;
-            console.log(
-                `[note-texture] native exception: type=${details?.type} address=${details?.address} pc=${pc} lr=${lr}`
-            );
-        } catch {
-        }
-
-        // Keep default crash behavior so we can still observe real stability.
-        return false;
-    });
-
     const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
     const LevelControl = AssemblyCSharp.class("LevelControl");
+    const JudgeLineControl = AssemblyCSharp.class("JudgeLineControl");
     const ClickControl = AssemblyCSharp.class("ClickControl");
     const DragControl = AssemblyCSharp.class("DragControl");
     const FlickControl = AssemblyCSharp.class("FlickControl");
@@ -561,110 +523,15 @@ Il2Cpp.perform(() => {
     const SpriteRendererClass = resolveClass("UnityEngine.SpriteRenderer", ["UnityEngine.CoreModule"]);
 
     let loadedSprites: { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } | null = null;
-    const processedHolds = new Set<string>();
-    const forcedTailByHold = new Map<string, any>();
-    const forceLoggedHolds = new Set<string>();
-    const watchedTailRenderers = new Set<string>();
-    let fallbackPatchedCount = 0;
-    let fallbackForcedCount = 0;
-    let forcedTailNullWarnCount = 0;
-    let tailSetSpriteTraceCount = 0;
-    let inForceTailRendererDepth = 0;
     let tailIdentityLogged = false;
-
-    // Keep cave pointers alive for the script lifetime.
-    // Without strong references, Frida may recycle these allocations.
-    const installedCaves: NativePointer[] = [];
-
-    // Shared storage for the multi.holdEnd sprite pointer.
-    // The code caves read from this address at runtime.
-    // Initialized to NULL; updated when sprites load in LevelControl.Awake.
-    const spritePtrSlot = Memory.alloc(8);
-    spritePtrSlot.writePointer(ptr(0));
-
-    const ensureLoadedSprites = (levelControl: any): { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } => {
-        if (loadedSprites) {
-            return loadedSprites;
-        }
-
-        const templates = collectTemplateSprites(levelControl, ClickControl, DragControl, FlickControl, HoldControl);
-
-        loadedSprites = resolveTailModeSprites(templates);
-
-        if (loadedSprites.multi.holdEnd) {
-            spritePtrSlot.writePointer(loadedSprites.multi.holdEnd.handle);
-        }
-
-        pinManagedObject(loadedSprites.normal.holdEnd, "normal:holdEnd");
-        pinManagedObject(loadedSprites.multi.holdEnd, "multi:holdEnd");
-
-        if (!tailIdentityLogged) {
-            tailIdentityLogged = true;
-            const n = loadedSprites.normal.holdEnd;
-            const m = loadedSprites.multi.holdEnd;
-            const sameTailHandle = sameObject(n, m);
-            const sigNormal = fileSignature(NOTE_TEXTURES.normal.holdEnd);
-            const sigMulti = fileSignature(NOTE_TEXTURES.multi.holdEnd);
-
-            console.log(
-                `[note-texture] tail identity normal=${n?.handle} multi=${m?.handle} same=${sameTailHandle} fileSig(normal=${sigNormal}, multi=${sigMulti})`
-            );
-
-            if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && sameTailHandle && forcedSeparateTailRebuildCount < 2) {
-                forcedSeparateTailRebuildCount++;
-                try {
-                    const rebuilt = createCustomSprite(NOTE_TEXTURES.multi.holdEnd, loadedSprites.normal.holdEnd);
-                    loadedSprites.multi.holdEnd = rebuilt;
-                    pinManagedObject(rebuilt, "multi:holdEnd:forced-rebuild");
-                    if (isLiveUnityObject(rebuilt)) {
-                        spritePtrSlot.writePointer(rebuilt.handle);
-                    }
-
-                    console.log(
-                        `[note-texture] forced rebuild separate tail normal=${loadedSprites.normal.holdEnd?.handle} multi=${loadedSprites.multi.holdEnd?.handle}`
-                    );
-                } catch (e) {
-                    console.log(`[note-texture] forced rebuild separate tail failed: ${e}`);
-                }
-            }
-        }
-
-        return loadedSprites;
-    };
-
-    const ensureLiveSeparateTailSprite = (): any | null => {
-        if (!loadedSprites) {
-            return null;
-        }
-
-        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE) {
-            return loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
-        }
-
-        const current = loadedSprites.multi.holdEnd;
-        if (isLiveUnityObject(current)) {
-            return current;
-        }
-
-        try {
-            const rebuilt = getOrCreateSprite(
-                `multi:holdEndSeparate:${NOTE_TEXTURES.multi.holdEnd}`,
-                NOTE_TEXTURES.multi.holdEnd,
-                loadedSprites.normal.holdEnd ?? loadedSprites.multi.holdBody
-            );
-
-            loadedSprites.multi.holdEnd = rebuilt;
-            if (isLiveUnityObject(rebuilt)) {
-                spritePtrSlot.writePointer(rebuilt.handle);
-                console.log("[note-texture] rebuilt live multi hold tail sprite");
-                return rebuilt;
-            }
-        } catch (e) {
-            console.log(`[note-texture] rebuild multi hold tail sprite failed: ${e}`);
-        }
-
-        return loadedSprites.normal.holdEnd;
-    };
+    let createNoteTailPatchCount = 0;
+    let createNoteTailMissCount = 0;
+    let createNoteTailTraceCount = 0;
+    let separateTailFallbackCount = 0;
+    let noteMoveTraceCount = 0;
+    let tailSetSpriteTraceCount = 0;
+    const trackedHoldDebug = new Map<string, { expectedTail: any; noteIndex: number; ifAbove: boolean; noteTime: number; floor: number }>();
+    const trackedTailRenderers = new Set<string>();
 
     const sameObject = (a: any, b: any): boolean => {
         if (!a || !b) {
@@ -691,381 +558,408 @@ Il2Cpp.perform(() => {
         }
     };
 
-    const getHoldKey = (instance: any): string | null => {
+    const getHandleString = (obj: any): string => {
         try {
-            return instance.handle?.toString?.() ?? null;
+            return obj?.handle?.toString?.() ?? "0x0";
+        } catch {
+            return "<err>";
+        }
+    };
+
+    const safeGetSpriteFromRenderer = (renderer: any): any | null => {
+        try {
+            if (!renderer || renderer.isNull?.()) {
+                return null;
+            }
+
+            return renderer.method("get_sprite").overload().invoke();
         } catch {
             return null;
         }
     };
 
-    const watchRenderer = (renderer: any): void => {
+    const classifyTailSprite = (sprite: any): string => {
+        if (!sprite || sprite.isNull?.()) {
+            return "null";
+        }
+
+        if (!loadedSprites) {
+            return "unknown";
+        }
+
+        if (sameObject(sprite, loadedSprites.multi.holdEnd)) {
+            return "multi";
+        }
+
+        if (sameObject(sprite, loadedSprites.normal.holdEnd)) {
+            return "normal";
+        }
+
+        return "other";
+    };
+
+    const getHoldNoteImagesTail = (holdControl: any): any | null => {
         try {
-            const key = renderer?.handle?.toString?.();
-            if (key) {
-                watchedTailRenderers.add(key);
+            const noteImages = holdControl.field("noteImages").value;
+            if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
+                return null;
+            }
+
+            return noteImages.get(2);
+        } catch {
+            return null;
+        }
+    };
+
+    const getHoldDebugMeta = (holdControl: any): { noteTime: number; floor: number } => {
+        try {
+            const noteInfor = holdControl.field("noteInfor").value;
+            if (!noteInfor || noteInfor.isNull?.()) {
+                return { noteTime: Number.NaN, floor: Number.NaN };
+            }
+
+            return {
+                noteTime: Number(noteInfor.field("time").value),
+                floor: Number(noteInfor.field("floorPosition").value)
+            };
+        } catch {
+            return { noteTime: Number.NaN, floor: Number.NaN };
+        }
+    };
+
+    const getListCount = (listObject: any): number => {
+        if (!listObject || listObject.isNull?.()) {
+            return 0;
+        }
+
+        try {
+            return Number(listObject.method("get_Count", 0).invoke());
+        } catch {
+            return 0;
+        }
+    };
+
+    const getListItem = (listObject: any, index: number): any | null => {
+        if (!listObject || listObject.isNull?.() || index < 0) {
+            return null;
+        }
+
+        try {
+            return listObject.method("get_Item", 1).invoke(index);
+        } catch {
+            return null;
+        }
+    };
+
+    const getNoteList = (judgeLine: any, ifAbove: boolean): any | null => {
+        try {
+            const listObject = judgeLine.field(ifAbove ? "notesAbove" : "notesBelow").value;
+            return listObject && !listObject.isNull?.() ? listObject : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const getChartNoteAt = (judgeLine: any, thisIndex: number, ifAbove: boolean): any | null => {
+        const noteList = getNoteList(judgeLine, ifAbove);
+        if (!noteList) {
+            return null;
+        }
+
+        const count = getListCount(noteList);
+        if (thisIndex < 0 || thisIndex >= count) {
+            return null;
+        }
+
+        return getListItem(noteList, thisIndex);
+    };
+
+    const isHoldChartNote = (chartNote: any): boolean => {
+        try {
+            return Number(chartNote.field("type").value) === 3;
+        } catch {
+            return false;
+        }
+    };
+
+    const isChordHoldAtIndex = (judgeLine: any, thisIndex: number, ifAbove: boolean): boolean => {
+        try {
+            if (!judgeLine.field("chordSupport").value) {
+                return false;
             }
         } catch {
+            return false;
         }
+
+        const noteList = getNoteList(judgeLine, ifAbove);
+        if (!noteList) {
+            return false;
+        }
+
+        const currentNote = getListItem(noteList, thisIndex);
+        if (!currentNote || currentNote.isNull?.()) {
+            return false;
+        }
+
+        let currentFloor = Number.NaN;
+        try {
+            currentFloor = Number(currentNote.field("floorPosition").value);
+        } catch {
+            return false;
+        }
+
+        if (!Number.isFinite(currentFloor)) {
+            return false;
+        }
+
+        const prevNote = getListItem(noteList, thisIndex - 1);
+        if (prevNote && !prevNote.isNull?.()) {
+            try {
+                const prevFloor = Number(prevNote.field("floorPosition").value);
+                if (Math.abs(prevFloor - currentFloor) < 0.001) {
+                    return true;
+                }
+            } catch {
+            }
+        }
+
+        const nextNote = getListItem(noteList, thisIndex + 1);
+        if (nextNote && !nextNote.isNull?.()) {
+            try {
+                const nextFloor = Number(nextNote.field("floorPosition").value);
+                if (Math.abs(nextFloor - currentFloor) < 0.001) {
+                    return true;
+                }
+            } catch {
+            }
+        }
+
+        return false;
     };
 
-    const syncMultiTailBeforeNoteMove = (instance: any): any | null => {
-        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE || !loadedSprites) {
+    const ensureLoadedSprites = (levelControl: any): { normal: LoadedNoteSpriteSet; multi: LoadedNoteSpriteSet } => {
+        if (loadedSprites) {
+            return loadedSprites;
+        }
+
+        const templates = collectTemplateSprites(levelControl, ClickControl, DragControl, FlickControl, HoldControl);
+        loadedSprites = resolveTailModeSprites(templates);
+
+        pinManagedReference(loadedSprites.normal.holdEnd, "normal:holdEnd");
+        pinManagedReference(loadedSprites.multi.holdEnd, "multi:holdEnd");
+
+        if (!tailIdentityLogged) {
+            tailIdentityLogged = true;
+            const normalTail = loadedSprites.normal.holdEnd;
+            const multiTail = loadedSprites.multi.holdEnd;
+            console.log(
+                `[note-texture] tail identity normal=${normalTail?.handle} multi=${multiTail?.handle} same=${sameObject(normalTail, multiTail)} fileSig(normal=${fileSignature(NOTE_TEXTURES.normal.holdEnd)}, multi=${fileSignature(NOTE_TEXTURES.multi.holdEnd)})`
+            );
+        }
+
+        return loadedSprites;
+    };
+
+    const getSeparateMultiTailSprite = (): any | null => {
+        if (!loadedSprites) {
             return null;
         }
 
-        const key = getHoldKey(instance);
-        if (!key) {
+        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE) {
+            return loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
+        }
+
+        if (hasManagedHandle(loadedSprites.multi.holdEnd)) {
+            return loadedSprites.multi.holdEnd;
+        }
+
+        if (separateTailFallbackCount < 20) {
+            separateTailFallbackCount++;
+            console.log(
+                `[note-texture][trace] separate tail fallback to normal because multi tail has no usable handle: multi=${getHandleString(loadedSprites.multi.holdEnd)} normal=${getHandleString(loadedSprites.normal.holdEnd)}`
+            );
+        }
+
+        return loadedSprites.normal.holdEnd;
+    };
+
+    const findCreatedHoldControl = (noteUpdateManager: any, judgeLine: any, targetNote: any, beforeCount: number): any | null => {
+        if (!noteUpdateManager || noteUpdateManager.isNull?.()) {
             return null;
         }
 
-        const noteImages = instance.field("noteImages").value;
-        if (!noteImages || noteImages.isNull?.() || noteImages.length < 2) {
+        let holdControls: any = null;
+        try {
+            holdControls = noteUpdateManager.field("holdControls").value;
+        } catch {
             return null;
         }
 
-        const judgeLine = instance.field("judgeLine").value;
-        if (!judgeLine || judgeLine.isNull?.()) {
+        const count = getListCount(holdControls);
+        if (count <= 0) {
             return null;
         }
 
-        const holdHL0 = judgeLine.field("HoldHL0").value;
-        const holdHL1 = judgeLine.field("HoldHL1").value;
-
-        const isMulti =
-            (noteImages.length > 0 && sameObject(noteImages.get(0), holdHL0)) ||
-            (noteImages.length > 1 && sameObject(noteImages.get(1), holdHL1));
-
-        if (!isMulti) {
-            forcedTailByHold.delete(key);
-            return null;
+        if (count > beforeCount) {
+            const lastCreated = getListItem(holdControls, count - 1);
+            if (lastCreated && !lastCreated.isNull?.()) {
+                try {
+                    if (
+                        sameObject(lastCreated.field("judgeLine").value, judgeLine) &&
+                        sameObject(lastCreated.field("noteInfor").value, targetNote)
+                    ) {
+                        return lastCreated;
+                    }
+                } catch {
+                }
+            }
         }
 
-        const targetTail = ensureLiveSeparateTailSprite() ?? loadedSprites.multi.holdEnd ?? loadedSprites.normal.holdEnd;
-        if (targetTail) {
-            forcedTailByHold.set(key, targetTail);
+        for (let index = count - 1; index >= 0; index--) {
+            const holdControl = getListItem(holdControls, index);
+            if (!holdControl || holdControl.isNull?.()) {
+                continue;
+            }
+
+            try {
+                if (
+                    sameObject(holdControl.field("judgeLine").value, judgeLine) &&
+                    sameObject(holdControl.field("noteInfor").value, targetNote)
+                ) {
+                    return holdControl;
+                }
+            } catch {
+            }
+        }
+
+        return null;
+    };
+
+    const applyTailToHoldInstance = (holdControl: any, tailSprite: any): boolean => {
+        if (!holdControl || holdControl.isNull?.() || !hasManagedHandle(tailSprite)) {
+            return false;
+        }
+
+        try {
+            const noteImages = holdControl.field("noteImages").value;
+            if (!noteImages || noteImages.isNull?.() || noteImages.length < 2) {
+                return false;
+            }
+
             if (noteImages.length >= 3) {
-                noteImages.set(2, targetTail);
-                instance.field("noteImages").value = noteImages;
+                noteImages.set(2, tailSprite);
+                holdControl.field("noteImages").value = noteImages;
             } else {
-                const e0 = noteImages.get(0);
-                const e1 = noteImages.get(1);
-                const expanded = Il2Cpp.array(UnitySprite, [e0, e1, targetTail]);
-                instance.field("noteImages").value = expanded;
+                const expanded = Il2Cpp.array(UnitySprite, [noteImages.get(0), noteImages.get(1), tailSprite]);
+                holdControl.field("noteImages").value = expanded;
             }
+        } catch {
+            return false;
         }
 
         try {
-            const tailGo = instance.field("holdEnd").value;
+            const tailGo = holdControl.field("holdEnd").value;
             if (tailGo && !tailGo.isNull?.()) {
                 tailGo.method("SetActive").overload("System.Boolean").invoke(true);
             }
         } catch {
         }
 
-        if (!processedHolds.has(key)) {
-            processedHolds.add(key);
-            fallbackPatchedCount++;
-            if (fallbackPatchedCount <= 100) {
-                const lenAfter = instance.field("noteImages").value?.length;
-                console.log(`[note-texture] fallback patched multi hold tail (#${fallbackPatchedCount}, len=${lenAfter})`);
+        try {
+            const tailRenderer = holdControl.field("_holdEndSpriteRenderer1").value;
+            if (tailRenderer && !tailRenderer.isNull?.()) {
+                tailRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
+                tailRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(tailSprite);
             }
+        } catch {
         }
 
-        return targetTail;
+        return true;
     };
 
-    const forceTailRenderer = (instance: any, tailSprite: any): void => {
-        let forced = false;
+    const patchCreatedMultiHoldTail = (judgeLine: any, thisIndex: number, ifAbove: boolean, beforeCount: number): void => {
+        if (Number(HOLD_TAIL_MODE) !== HOLD_TAIL_MODE_SEPARATE || !loadedSprites) {
+            return;
+        }
 
-        if (!isLiveUnityObject(tailSprite)) {
-            if (forcedTailNullWarnCount < 100) {
-                forcedTailNullWarnCount++;
-                console.log(`[note-texture] forceTailRenderer skipped dead tail sprite: handle=${tailSprite?.handle}`);
+        const noteUpdateManager = judgeLine.field("_noteUpdateManager").value;
+        if (!noteUpdateManager || noteUpdateManager.isNull?.()) {
+            return;
+        }
+
+        let holdCountAfter = 0;
+        try {
+            holdCountAfter = getListCount(noteUpdateManager.field("holdControls").value);
+        } catch {
+            holdCountAfter = 0;
+        }
+
+        const chartNote = getChartNoteAt(judgeLine, thisIndex, ifAbove);
+        if (!chartNote || chartNote.isNull?.() || !isHoldChartNote(chartNote)) {
+            return;
+        }
+
+        if (!isChordHoldAtIndex(judgeLine, thisIndex, ifAbove)) {
+            return;
+        }
+
+        const holdControl = findCreatedHoldControl(noteUpdateManager, judgeLine, chartNote, beforeCount);
+        if (!holdControl) {
+            if (createNoteTailMissCount < 30) {
+                createNoteTailMissCount++;
+                console.log(
+                    `[note-texture] CreateNote tail patch missed instance (#${createNoteTailMissCount}, index=${thisIndex}, ifAbove=${ifAbove})`
+                );
             }
             return;
         }
 
-        inForceTailRendererDepth++;
-        try {
-            const tailGo = instance.field("holdEnd").value;
-            if (tailGo && !tailGo.isNull?.()) {
-                tailGo.method("SetActive").overload("System.Boolean").invoke(true);
-
-                try {
-                    const sr = tailGo.method("GetComponent")
-                        .overload("System.Type")
-                        .invoke(SpriteRendererClass.type.object);
-                    if (sr && !sr.isNull?.()) {
-                        watchRenderer(sr);
-                        sr.method("set_enabled").overload("System.Boolean").invoke(true);
-                        sr.method("set_sortingOrder").overload("System.Int32").invoke(-1);
-                        sr.method("set_sprite").overload("UnityEngine.Sprite").invoke(tailSprite);
-                        forced = true;
-                    }
-                } catch {
-                }
-            }
-        } catch {
+        const tailSprite = getSeparateMultiTailSprite();
+        if (!tailSprite) {
+            return;
         }
 
-        try {
-            const tailRenderer = instance.field("_holdEndSpriteRenderer1").value;
-            if (tailRenderer && !tailRenderer.isNull?.()) {
-                watchRenderer(tailRenderer);
-                tailRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
-                tailRenderer.method("set_sortingOrder").overload("System.Int32").invoke(-1);
-                tailRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(tailSprite);
-                forced = true;
-            }
-        } catch {
-        } finally {
-            inForceTailRendererDepth--;
-        }
+        const beforeTail = getHoldNoteImagesTail(holdControl);
+        const debugMeta = getHoldDebugMeta(holdControl);
 
-        const key = getHoldKey(instance);
-        if (forced && key && !forceLoggedHolds.has(key)) {
-            forceLoggedHolds.add(key);
-            fallbackForcedCount++;
-            if (fallbackForcedCount <= 100) {
-                try {
-                    const tailRenderer = instance.field("_holdEndSpriteRenderer1").value;
-                    const current = tailRenderer?.method("get_sprite").overload().invoke();
-                    console.log(
-                        `[note-texture] fallback forced tail renderer (#${fallbackForcedCount}, key=${key}, sprite=${current?.handle})`
-                    );
-                } catch {
-                    console.log(`[note-texture] fallback forced tail renderer (#${fallbackForcedCount}, key=${key})`);
-                }
+        if (applyTailToHoldInstance(holdControl, tailSprite)) {
+            createNoteTailPatchCount++;
+            const holdKey = getHandleString(holdControl);
+            trackedHoldDebug.set(holdKey, {
+                expectedTail: tailSprite,
+                noteIndex: thisIndex,
+                ifAbove,
+                noteTime: debugMeta.noteTime,
+                floor: debugMeta.floor
+            });
+
+            const afterTail = getHoldNoteImagesTail(holdControl);
+            const tailRenderer = holdControl.field("_holdEndSpriteRenderer1").value;
+            const rendererSprite = safeGetSpriteFromRenderer(tailRenderer);
+            const rendererKey = getHandleString(tailRenderer);
+            if (rendererKey !== "0x0" && rendererKey !== "<err>") {
+                trackedTailRenderers.add(rendererKey);
+            }
+
+            if (createNoteTailPatchCount <= 100) {
+                console.log(
+                    `[note-texture] CreateNote patched multi hold tail (#${createNoteTailPatchCount}, hold=${holdControl.handle})`
+                );
+            }
+
+            if (createNoteTailTraceCount < 60) {
+                createNoteTailTraceCount++;
+                console.log(
+                    `[note-texture][trace] CreateNote patch details hold=${holdKey} index=${thisIndex} ifAbove=${ifAbove} holdCount=${beforeCount}->${holdCountAfter} noteTime=${debugMeta.noteTime} floor=${debugMeta.floor} targetTail=${getHandleString(tailSprite)}(${classifyTailSprite(tailSprite)}) beforeTail=${getHandleString(beforeTail)}(${classifyTailSprite(beforeTail)}) afterTail=${getHandleString(afterTail)}(${classifyTailSprite(afterTail)}) renderer=${rendererKey} rendererSprite=${getHandleString(rendererSprite)}(${classifyTailSprite(rendererSprite)})`
+                );
             }
         }
     };
 
-    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
-        HoldControl.method("NoteMove", 0).implementation = function (this: any): void {
-            const key = getHoldKey(this);
-            let forcedTail: any | null = null;
-
-            try {
-                forcedTail = syncMultiTailBeforeNoteMove(this);
-            } catch (e) {
-                console.log(`[note-texture] fallback multi tail sync failed: ${e}`);
-            }
-
-            this.method("NoteMove").invoke();
-
-            if (!forcedTail && key) {
-                forcedTail = forcedTailByHold.get(key) ?? null;
-            }
-
-            if (forcedTail) {
-                forceTailRenderer(this, forcedTail);
-            }
-        };
-
-        HoldControl.method("Judge", 0).implementation = function (this: any): any {
-            const result = this.method("Judge").invoke();
-
-            try {
-                const key = getHoldKey(this);
-                if (key) {
-                    const forcedTail = forcedTailByHold.get(key);
-                    if (forcedTail) {
-                        forceTailRenderer(this, forcedTail);
-                    }
-                }
-            } catch (e) {
-                console.log(`[note-texture] fallback post-Judge tail force failed: ${e}`);
-            }
-
-            return result;
-        };
-
-        SpriteRendererClass.method("set_sprite")
-            .overload("UnityEngine.Sprite")
-            .implementation = function (this: any, sprite: any): void {
-                const rendererKey = this.handle?.toString?.() ?? null;
-                const traced = !!rendererKey && watchedTailRenderers.has(rendererKey);
-
-                let beforeHandle = "<na>";
-                if (traced && tailSetSpriteTraceCount < 80) {
-                    try {
-                        const before = this.method("get_sprite").overload().invoke();
-                        beforeHandle = before?.handle?.toString?.() ?? "0x0";
-                    } catch {
-                        beforeHandle = "<err>";
-                    }
-                }
-
-                this.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprite);
-
-                if (traced && tailSetSpriteTraceCount < 80) {
-                    tailSetSpriteTraceCount++;
-
-                    let afterHandle = "<na>";
-                    try {
-                        const after = this.method("get_sprite").overload().invoke();
-                        afterHandle = after?.handle?.toString?.() ?? "0x0";
-                    } catch {
-                        afterHandle = "<err>";
-                    }
-
-                    const argHandle = sprite?.handle?.toString?.() ?? "0x0";
-                    const src = inForceTailRendererDepth > 0 ? "fallback" : "external";
-                    console.log(
-                        `[note-texture][trace] set_sprite src=${src} renderer=${rendererKey} arg=${argHandle} before=${beforeHandle} after=${afterHandle}`
-                    );
-                }
-            };
-
-        console.log("[note-texture] fallback enabled: HoldControl.NoteMove+Judge tail force for multi hold tail");
-    }
-
-    // ---------- Inline hooks (code-cave style) ----------
-    //
-    // In JudgeLineControl.CreateNote, when a Hold is detected as multi-press (chord),
-    // the game writes:
-    //   noteImages[0] = HoldHL0  (head)    — STR X20, [Xn, #0x20]
-    //   noteImages[1] = HoldHL1  (body)    — STR X20, [Xn, #0x28]
-    // but NEVER writes noteImages[2] (tail).
-    //
-    // We replace the second STR with a branch to a code cave that:
-    //   1. Executes the original STR (noteImages[1] = HoldHL1)
-    //   2. Loads the multi.holdEnd sprite pointer from spritePtrSlot
-    //   3. If non-null, writes it to noteImages[2]  (array + 0x30)
-    //   4. Branches back to the next original instruction
-    //
-    // This patches exactly ONE instruction (4 bytes) per path, so
-    // the branch-target at LABEL_130 / LABEL_188 is never touched.
-    //
-    // Hook addresses (RVA):
-    //   "above" path: 0x2397bb8  STR X20, [X22, #0x28]  → return to 0x2397bbc
-    //   "below" path: 0x2397f64  STR X20, [X23, #0x28]  → return to 0x2397f68
-
-    function installHoldEndCave(
-        hookRva: number,
-        noteImagesReg: string,
-        returnRva: number
-    ): void {
-        const base = Il2Cpp.module.base;
-        const hookAddr = base.add(hookRva);
-        const returnAddr = base.add(returnRva);
-
-        // Read the original 4-byte instruction before we overwrite it
-        const originalBytes = hookAddr.readByteArray(4)!;
-
-        // Allocate code cave and guarantee unique address per hook.
-        let cave = allocCaveNear(hookAddr);
-
-        if (installedCaves.some((p) => p.equals(cave))) {
-            console.log(`[note-texture] cave address reused (${cave}), retrying allocation`);
-
-            let retry: NativePointer | null = null;
-            for (let i = 0; i < 4; i++) {
-                const candidate = Memory.alloc(Process.pageSize);
-                if (!installedCaves.some((p) => p.equals(candidate))) {
-                    retry = candidate;
-                    break;
-                }
-            }
-
-            if (!retry) {
-                throw new Error(`unable to allocate unique cave address (current=${cave})`);
-            }
-
-            cave = retry;
-        }
-
-        if (!isArm64BReachable(hookAddr, cave)) {
-            throw new Error(
-                `hook->cave branch out of range (hook=${hookAddr}, cave=${cave})`
-            );
-        }
-
-        if (!isArm64BReachable(cave, returnAddr)) {
-            throw new Error(
-                `cave->return branch out of range (cave=${cave}, return=${returnAddr})`
-            );
-        }
-
-        const w = new Arm64Writer(cave, { pc: cave });
-
-        // 1. Execute original: STR X20, [Xn, #0x28]
-        w.putBytes(originalBytes);
-
-        // 1.5 Guard: only write noteImages[2] when array length > 2.
-        // Use raw encodings for compatibility with older Arm64Writer APIs:
-        //   CMP W8, #2           => 1f 09 00 71
-        //   B.LS +0x14 (to skip) => a9 00 00 54
-        w.putBytes([0x1f, 0x09, 0x00, 0x71]);
-        w.putBytes([0xa9, 0x00, 0x00, 0x54]);
-
-        // 2. Load sprite pointer: X8 = *spritePtrSlot
-        //    (Arm64Writer emits LDR X8, [PC, #literal] with the address in a
-        //     literal pool appended after flush)
-        w.putLdrRegAddress("x8", spritePtrSlot);
-        w.putLdrRegRegOffset("x8", "x8", 0);
-
-        // 3. Skip if sprite pointer is NULL
-        w.putCbzRegLabel("x8", "skip");
-
-        // 4. noteImages[2] = sprite  →  STR X8, [Xn, #0x30]
-        (w as any).putStrRegRegOffset("x8", noteImagesReg, 0x30);
-
-        // 5. Branch back to the instruction after the original STR
-        w.putLabel("skip");
-        w.putBImm(returnAddr);
-
-        w.flush();
-
-        // Make the cave executable (drop write permission)
-        Memory.protect(cave, Process.pageSize, "r-x");
-
-        // Patch the original STR with an unconditional B to the cave
-        Memory.patchCode(hookAddr, 4, (code: NativePointer) => {
-            const p = new Arm64Writer(code, { pc: hookAddr });
-            p.putBImm(cave);
-            p.flush();
-        });
-
-        console.log(
-            `[note-texture] code cave installed: RVA 0x${hookRva.toString(16)} → ${cave} (reg=${noteImagesReg})`
-        );
-
-        installedCaves.push(cave);
-    }
-
-    if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && ENABLE_NATIVE_CODE_CAVE) {
-        let caveInstallFailed = false;
-
-        try {
-            // "above" path — noteImages in X22
-            installHoldEndCave(0x2397bb8, "x22", 0x2397bbc);
-        } catch (e) {
-            caveInstallFailed = true;
-            console.log(`[note-texture] failed cave install (above @ 0x2397bb8): ${e}`);
-        }
-
-        try {
-            // "below" path — noteImages in X23
-            installHoldEndCave(0x2397f64, "x23", 0x2397f68);
-        } catch (e) {
-            caveInstallFailed = true;
-            console.log(`[note-texture] failed cave install (below @ 0x2397f64): ${e}`);
-        }
-
-        if (!caveInstallFailed) {
-            console.log("[note-texture] code caves installed for multi hold tail (SEPARATE mode)");
-        }
-    } else if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE) {
-        console.log("[note-texture] native code cave disabled; using managed fallback path");
-    }
-
     LevelControl.method("Awake", 0).implementation = function (this: any): void {
-        this.method("Awake").invoke();
+        this.method("Awake", 0).invoke();
 
         try {
-            processedHolds.clear();
             const sprites = ensureLoadedSprites(this);
             applyToLevelControl(this, sprites, ClickControl, DragControl, FlickControl, HoldControl);
             console.log("[note-texture] reapplied textures at LevelControl.Awake");
@@ -1076,7 +970,7 @@ Il2Cpp.perform(() => {
 
     if (UiChange) {
         UiChange.method("OnEnable", 0).implementation = function (this: any): void {
-            this.method("OnEnable").invoke();
+            this.method("OnEnable", 0).invoke();
 
             try {
                 const levelControl = tryGetParentLevelControl(this, LevelControl);
@@ -1093,5 +987,90 @@ Il2Cpp.perform(() => {
         };
     }
 
-    console.log(`[note-texture] hook installed at LevelControl.Awake + UiChange.OnEnable (tail mode=${HOLD_TAIL_MODE})`);
+    JudgeLineControl.method("CreateNote", 2).implementation = function (this: any, thisIndex: number, ifAbove: boolean): void {
+        const index = Number(thisIndex);
+        const above = !!ifAbove;
+        let shouldPatchTail = false;
+        let holdCountBefore = 0;
+
+        try {
+            if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE && loadedSprites) {
+                const chartNote = getChartNoteAt(this, index, above);
+                if (chartNote && !chartNote.isNull?.() && isHoldChartNote(chartNote)) {
+                    shouldPatchTail = true;
+                    const noteUpdateManager = this.field("_noteUpdateManager").value;
+                    const holdControls = noteUpdateManager?.field("holdControls").value;
+                    holdCountBefore = getListCount(holdControls);
+                }
+            }
+        } catch {
+        }
+
+        this.method("CreateNote", 2).invoke(thisIndex, ifAbove);
+
+        if (!shouldPatchTail) {
+            return;
+        }
+
+        try {
+            patchCreatedMultiHoldTail(this, index, above, holdCountBefore);
+        } catch (e) {
+            console.log(`[note-texture] CreateNote tail patch failed: ${e}`);
+        }
+    };
+
+    HoldControl.method("NoteMove", 0).implementation = function (this: any): void {
+        const holdKey = getHandleString(this);
+        const debugMeta = trackedHoldDebug.get(holdKey) ?? null;
+
+        if (debugMeta && noteMoveTraceCount < 80) {
+            const beforeTail = getHoldNoteImagesTail(this);
+            const beforeRenderer = this.field("_holdEndSpriteRenderer1").value;
+            const beforeRendererSprite = safeGetSpriteFromRenderer(beforeRenderer);
+            console.log(
+                `[note-texture][trace] NoteMove before hold=${holdKey} index=${debugMeta.noteIndex} ifAbove=${debugMeta.ifAbove} noteTime=${debugMeta.noteTime} floor=${debugMeta.floor} expected=${getHandleString(debugMeta.expectedTail)}(${classifyTailSprite(debugMeta.expectedTail)}) noteTail=${getHandleString(beforeTail)}(${classifyTailSprite(beforeTail)}) renderer=${getHandleString(beforeRenderer)} rendererSprite=${getHandleString(beforeRendererSprite)}(${classifyTailSprite(beforeRendererSprite)})`
+            );
+            noteMoveTraceCount++;
+        }
+
+        this.method("NoteMove", 0).invoke();
+
+        if (debugMeta && noteMoveTraceCount < 80) {
+            const afterTail = getHoldNoteImagesTail(this);
+            const afterRenderer = this.field("_holdEndSpriteRenderer1").value;
+            const afterRendererKey = getHandleString(afterRenderer);
+            const afterRendererSprite = safeGetSpriteFromRenderer(afterRenderer);
+
+            if (afterRendererKey !== "0x0" && afterRendererKey !== "<err>") {
+                trackedTailRenderers.add(afterRendererKey);
+            }
+
+            console.log(
+                `[note-texture][trace] NoteMove after hold=${holdKey} index=${debugMeta.noteIndex} ifAbove=${debugMeta.ifAbove} noteTime=${debugMeta.noteTime} floor=${debugMeta.floor} expected=${getHandleString(debugMeta.expectedTail)}(${classifyTailSprite(debugMeta.expectedTail)}) noteTail=${getHandleString(afterTail)}(${classifyTailSprite(afterTail)}) renderer=${afterRendererKey} rendererSprite=${getHandleString(afterRendererSprite)}(${classifyTailSprite(afterRendererSprite)})`
+            );
+            noteMoveTraceCount++;
+        }
+    };
+
+    SpriteRendererClass.method("set_sprite")
+        .overload("UnityEngine.Sprite")
+        .implementation = function (this: any, sprite: any): void {
+            const rendererKey = getHandleString(this);
+            const traced = trackedTailRenderers.has(rendererKey);
+            const beforeSprite = traced ? safeGetSpriteFromRenderer(this) : null;
+
+            this.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprite);
+
+            if (traced && tailSetSpriteTraceCount < 80) {
+                const afterSprite = safeGetSpriteFromRenderer(this);
+                console.log(
+                    `[note-texture][trace] tail renderer set_sprite renderer=${rendererKey} arg=${getHandleString(sprite)}(${classifyTailSprite(sprite)}) before=${getHandleString(beforeSprite)}(${classifyTailSprite(beforeSprite)}) after=${getHandleString(afterSprite)}(${classifyTailSprite(afterSprite)})`
+                );
+                tailSetSpriteTraceCount++;
+            }
+        };
+
+    console.log(
+        `[note-texture] hook installed at LevelControl.Awake + UiChange.OnEnable + JudgeLineControl.CreateNote + HoldControl.NoteMove(trace) (tail mode=${HOLD_TAIL_MODE})`
+    );
 });
