@@ -1,0 +1,1943 @@
+[
+    {
+        "id": 1,
+        "time": 2.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 2,
+        "time": 2.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 3,
+        "time": 3.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 4,
+        "time": 3.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 5,
+        "time": 3.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 6,
+        "time": 3.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 7,
+        "time": 4.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 8,
+        "time": 4.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 9,
+        "time": 4.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 10,
+        "time": 5.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 11,
+        "time": 5.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 12,
+        "time": 5.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 13,
+        "time": 6.0,
+        "holdTime": 0.3,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 14,
+        "time": 6.0,
+        "holdTime": 0.3,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 15,
+        "time": 7.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 16,
+        "time": 7.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3,
+            4
+        ]
+    },
+    {
+        "id": 17,
+        "time": 7.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 18,
+        "time": 8.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3,
+            4
+        ]
+    },
+    {
+        "id": 19,
+        "time": 8.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 20,
+        "time": 8.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            3,
+            1
+        ]
+    },
+    {
+        "id": 21,
+        "time": 9.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 22,
+        "time": 9.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            3,
+            1
+        ]
+    },
+    {
+        "id": 23,
+        "time": 9.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 24,
+        "time": 9.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            4,
+            1
+        ]
+    },
+    {
+        "id": 25,
+        "time": 10.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 26,
+        "time": 10.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            1,
+            3
+        ]
+    },
+    {
+        "id": 27,
+        "time": 10.8,
+        "holdTime": 0.225,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 28,
+        "time": 11.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3,
+            4,
+            4
+        ]
+    },
+    {
+        "id": 29,
+        "time": 11.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3,
+            4,
+            4
+        ]
+    },
+    {
+        "id": 30,
+        "time": 11.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            4,
+            3,
+            3
+        ]
+    },
+    {
+        "id": 31,
+        "time": 11.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            4,
+            3,
+            3
+        ]
+    },
+    {
+        "id": 32,
+        "time": 13.05,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 33,
+        "time": 13.5,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 34,
+        "time": 15.45,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 35,
+        "time": 15.9,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 36,
+        "time": 16.2,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 37,
+        "time": 17.25,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 38,
+        "time": 17.55,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 39,
+        "time": 17.85,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 40,
+        "time": 18.3,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 41,
+        "time": 18.75,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 42,
+        "time": 19.05,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 43,
+        "time": 19.65,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 44,
+        "time": 19.95,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 45,
+        "time": 20.25,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 46,
+        "time": 21.0,
+        "holdTime": 0.45,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 47,
+        "time": 21.0,
+        "holdTime": 0.45,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 48,
+        "time": 21.6,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 49,
+        "time": 21.9,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 50,
+        "time": 22.2,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 51,
+        "time": 22.5,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 52,
+        "time": 22.8,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 53,
+        "time": 23.1,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 54,
+        "time": 23.4,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 55,
+        "time": 23.7,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 56,
+        "time": 24.0,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 57,
+        "time": 24.15,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 58,
+        "time": 24.3,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 59,
+        "time": 24.6,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 60,
+        "time": 24.9,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 61,
+        "time": 25.2,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 62,
+        "time": 25.5,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 63,
+        "time": 25.8,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 64,
+        "time": 26.1,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 65,
+        "time": 26.4,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 66,
+        "time": 26.7,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 67,
+        "time": 27.0,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 68,
+        "time": 27.3,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 69,
+        "time": 27.6,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 70,
+        "time": 27.9,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 71,
+        "time": 28.2,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 72,
+        "time": 28.5,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 73,
+        "time": 28.8,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 74,
+        "time": 28.95,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 75,
+        "time": 29.1,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 76,
+        "time": 29.4,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 77,
+        "time": 29.7,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 78,
+        "time": 30.0,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 79,
+        "time": 30.3,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 80,
+        "time": 30.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 81,
+        "time": 30.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 82,
+        "time": 31.2,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 83,
+        "time": 31.35,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 84,
+        "time": 31.5,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 85,
+        "time": 31.65,
+        "holdTime": 0.975,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 86,
+        "time": 33.15,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 87,
+        "time": 33.3,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 88,
+        "time": 33.45,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 89,
+        "time": 33.6,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 90,
+        "time": 33.75,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 91,
+        "time": 33.9,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 92,
+        "time": 34.05,
+        "holdTime": 1.575,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 93,
+        "time": 36.0,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 94,
+        "time": 36.3,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 95,
+        "time": 36.6,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 96,
+        "time": 36.9,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 97,
+        "time": 37.2,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 98,
+        "time": 37.5,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 99,
+        "time": 37.8,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 100,
+        "time": 38.1,
+        "holdTime": 0.15,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 101,
+        "time": 38.4,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 102,
+        "time": 38.55,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 103,
+        "time": 38.55,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 104,
+        "time": 38.7,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 105,
+        "time": 38.7,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 106,
+        "time": 38.85,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 107,
+        "time": 38.85,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 108,
+        "time": 39.6,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 109,
+        "time": 39.75,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 110,
+        "time": 39.9,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 111,
+        "time": 40.05,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 112,
+        "time": 40.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 113,
+        "time": 41.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 114,
+        "time": 41.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 115,
+        "time": 41.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 116,
+        "time": 42.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 117,
+        "time": 42.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 118,
+        "time": 42.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 119,
+        "time": 42.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 120,
+        "time": 43.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 121,
+        "time": 43.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 122,
+        "time": 43.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 123,
+        "time": 44.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 124,
+        "time": 44.4,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 125,
+        "time": 44.7,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 126,
+        "time": 45.0,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 127,
+        "time": 45.3,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 128,
+        "time": 45.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 129,
+        "time": 45.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 130,
+        "time": 46.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 131,
+        "time": 46.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 132,
+        "time": 46.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 133,
+        "time": 47.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 134,
+        "time": 47.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 135,
+        "time": 47.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 136,
+        "time": 48.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 137,
+        "time": 48.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 138,
+        "time": 48.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 139,
+        "time": 48.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 140,
+        "time": 49.2,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 141,
+        "time": 49.2,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 142,
+        "time": 49.35,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 143,
+        "time": 49.35,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 144,
+        "time": 50.4,
+        "holdTime": 0.45,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 145,
+        "time": 50.4,
+        "holdTime": 0.3,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 146,
+        "time": 51.0,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 147,
+        "time": 51.3,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            2
+        ]
+    },
+    {
+        "id": 148,
+        "time": 51.6,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 149,
+        "time": 51.9,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 150,
+        "time": 53.85,
+        "holdTime": 0.6,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 151,
+        "time": 54.0,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 152,
+        "time": 54.6,
+        "holdTime": 0.075,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 153,
+        "time": 54.75,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 154,
+        "time": 54.75,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 155,
+        "time": 54.9,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 156,
+        "time": 54.9,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 157,
+        "time": 55.05,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 158,
+        "time": 55.05,
+        "holdTime": 0.075,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 159,
+        "time": 55.2,
+        "holdTime": 0.45,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 160,
+        "time": 55.2,
+        "holdTime": 0.3,
+        "multi": true,
+        "noteTypes": [
+            3,
+            3
+        ]
+    },
+    {
+        "id": 161,
+        "time": 55.8,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 162,
+        "time": 56.1,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 163,
+        "time": 56.4,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 164,
+        "time": 56.7,
+        "holdTime": 0.15,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 165,
+        "time": 58.65,
+        "holdTime": 0.45,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 166,
+        "time": 58.8,
+        "holdTime": 0.3,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 167,
+        "time": 60.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 168,
+        "time": 60.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1,
+            4
+        ]
+    },
+    {
+        "id": 169,
+        "time": 60.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 170,
+        "time": 60.9,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            4,
+            1
+        ]
+    },
+    {
+        "id": 171,
+        "time": 61.2,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            3
+        ]
+    },
+    {
+        "id": 172,
+        "time": 61.5,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            1,
+            3
+        ]
+    },
+    {
+        "id": 173,
+        "time": 61.8,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 174,
+        "time": 62.1,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            3,
+            1
+        ]
+    },
+    {
+        "id": 175,
+        "time": 62.4,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 176,
+        "time": 62.7,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            1,
+            3
+        ]
+    },
+    {
+        "id": 177,
+        "time": 63.0,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            3,
+            1
+        ]
+    },
+    {
+        "id": 178,
+        "time": 63.3,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            1,
+            4,
+            3
+        ]
+    },
+    {
+        "id": 179,
+        "time": 63.6,
+        "holdTime": 0.225,
+        "multi": true,
+        "noteTypes": [
+            4,
+            1,
+            3
+        ]
+    },
+    {
+        "id": 180,
+        "time": 64.996875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 181,
+        "time": 65.296875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 182,
+        "time": 65.596875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 183,
+        "time": 65.896875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 184,
+        "time": 66.196875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 185,
+        "time": 66.496875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 186,
+        "time": 66.796875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 187,
+        "time": 67.096875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 188,
+        "time": 67.396875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 189,
+        "time": 67.696875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 190,
+        "time": 67.996875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 191,
+        "time": 68.296875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 192,
+        "time": 68.596875,
+        "holdTime": 0.103125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 193,
+        "time": 69.0,
+        "holdTime": 0.346875,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 194,
+        "time": 69.3,
+        "holdTime": 0.403125,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 195,
+        "time": 69.796875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 196,
+        "time": 70.096875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 197,
+        "time": 70.396875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 198,
+        "time": 70.696875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 199,
+        "time": 70.996875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    },
+    {
+        "id": 200,
+        "time": 71.296875,
+        "holdTime": 0.20625,
+        "multi": false,
+        "noteTypes": [
+            3
+        ]
+    }
+]

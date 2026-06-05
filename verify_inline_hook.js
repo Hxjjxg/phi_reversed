@@ -3342,438 +3342,112 @@ ${this.isEnum ? `enum` : this.isStruct ? `struct` : this.isInterface ? `interfac
   }
 });
 
-// scripts/note_texture_hook/note_texture_replace_bridge_changed.ts
-var require_note_texture_replace_bridge_changed = __commonJS({
-  "scripts/note_texture_hook/note_texture_replace_bridge_changed.ts"(exports) {
+// verify_inline_hook.ts
+var require_verify_inline_hook = __commonJS({
+  "verify_inline_hook.ts"(exports) {
     init_node_globals();
     Object.defineProperty(exports, "__esModule", { value: true });
     init_dist();
-    var HOLD_TAIL_MODE_NONE = 1;
-    var HOLD_TAIL_MODE_SHARED = 2;
-    var HOLD_TAIL_MODE_SEPARATE = 3;
-    var HOLD_TAIL_MODE = HOLD_TAIL_MODE_SEPARATE;
-    var LOG_MODE3_HOLD_TAIL = true;
-    var NOTE_TEXTURES = {
-      normal: {
-        click: "/data/local/tmp/click.png",
-        drag: "/data/local/tmp/drag.png",
-        flick: "/data/local/tmp/flick.png",
-        holdHead: "/data/local/tmp/hold_head.png",
-        holdBody: "/data/local/tmp/hold_body.png",
-        holdEnd: "/data/local/tmp/hold_end.png"
-      },
-      multi: {
-        click: "/data/local/tmp/click_multi.png",
-        drag: "/data/local/tmp/drag_multi.png",
-        flick: "/data/local/tmp/flick_multi.png",
-        holdHead: "/data/local/tmp/hold_head_multi.png",
-        holdBody: "/data/local/tmp/hold_body_multi.png",
-        holdEnd: "/data/local/tmp/hold_end_multi.png"
-      }
-    };
-    var FridaFile = globalThis.File;
-    var spriteCache = /* @__PURE__ */ new Map();
-    var processedHolds = /* @__PURE__ */ new Set();
-    var loggedHolds = /* @__PURE__ */ new Set();
-    function resolveClass(fullName, preferredAssemblies = []) {
-      for (const asmName of preferredAssemblies) {
-        const asm = Il2Cpp.domain.tryAssembly(asmName);
-        const klass = asm?.image.tryClass(fullName);
-        if (klass) {
-          return klass;
-        }
-      }
-      for (const asm of Il2Cpp.domain.assemblies) {
-        const klass = asm.image.tryClass(fullName);
-        if (klass) {
-          return klass;
-        }
-      }
-      throw new Error(`Class not found: ${fullName}`);
-    }
-    function readLocalBytes(path) {
-      const file = new FridaFile(path, "rb");
-      try {
-        const raw = file.readBytes();
-        return Array.from(new Uint8Array(raw));
-      } finally {
-        file.close();
-      }
-    }
-    function clamp01(value) {
-      if (value < 0) {
-        return 0;
-      }
-      if (value > 1) {
-        return 1;
-      }
-      return value;
-    }
-    function readStructNumber(structObj, fieldName) {
-      try {
-        const value = structObj.field(fieldName).value;
-        return Number(value);
-      } catch {
-        try {
-          const value = structObj.method(`get_${fieldName}`).invoke();
-          return Number(value);
-        } catch {
-          return Number.NaN;
-        }
-      }
-    }
-    function getSpriteCreateParams(templateSprite) {
-      let pivotX = 0.5;
-      let pivotY = 0.5;
-      let pixelsPerUnit = 100;
-      if (!templateSprite || templateSprite.isNull?.()) {
-        return { pivotX, pivotY, pixelsPerUnit };
-      }
-      try {
-        const ppu = Number(templateSprite.method("get_pixelsPerUnit").invoke());
-        if (Number.isFinite(ppu) && ppu > 0) {
-          pixelsPerUnit = ppu;
-        }
-      } catch {
-      }
-      try {
-        const pivot = templateSprite.method("get_pivot").invoke();
-        const rect = templateSprite.method("get_rect").invoke();
-        const pivotPixelsX = readStructNumber(pivot, "x");
-        const pivotPixelsY = readStructNumber(pivot, "y");
-        const rectWidth = readStructNumber(rect, "width");
-        const rectHeight = readStructNumber(rect, "height");
-        if (Number.isFinite(pivotPixelsX) && Number.isFinite(pivotPixelsY) && Number.isFinite(rectWidth) && Number.isFinite(rectHeight) && rectWidth > 0 && rectHeight > 0) {
-          pivotX = clamp01(pivotPixelsX / rectWidth);
-          pivotY = clamp01(pivotPixelsY / rectHeight);
-        }
-      } catch {
-      }
-      return { pivotX, pivotY, pixelsPerUnit };
-    }
-    function createCustomSprite(imagePath, templateSprite = null) {
-      const Texture2D = resolveClass("UnityEngine.Texture2D", ["UnityEngine.CoreModule"]);
-      const Sprite = resolveClass("UnityEngine.Sprite", ["UnityEngine.CoreModule"]);
-      const Rect = resolveClass("UnityEngine.Rect", ["UnityEngine.CoreModule"]);
-      const Vector2 = resolveClass("UnityEngine.Vector2", ["UnityEngine.CoreModule"]);
-      const ImageConversion = resolveClass("UnityEngine.ImageConversion", ["UnityEngine.ImageConversionModule", "UnityEngine.CoreModule"]);
-      const systemByte = Il2Cpp.corlib.class("System.Byte");
-      const byteArray = Il2Cpp.array(systemByte, readLocalBytes(imagePath));
-      const texture = Texture2D.alloc();
-      texture.method(".ctor").overload("System.Int32", "System.Int32").invoke(2, 2);
-      const loaded = ImageConversion.method("LoadImage").overload("UnityEngine.Texture2D", "System.Byte[]").invoke(texture, byteArray);
-      if (!loaded) {
-        throw new Error(`LoadImage failed: ${imagePath}`);
-      }
-      const width = texture.method("get_width").invoke();
-      const height = texture.method("get_height").invoke();
-      const rect = Rect.alloc();
-      rect.method(".ctor").overload("System.Single", "System.Single", "System.Single", "System.Single").invoke(0, 0, width, height);
-      const params = getSpriteCreateParams(templateSprite);
-      const pivot = Vector2.alloc();
-      pivot.method(".ctor").overload("System.Single", "System.Single").invoke(params.pivotX, params.pivotY);
-      return Sprite.method("Create").overload("UnityEngine.Texture2D", "UnityEngine.Rect", "UnityEngine.Vector2", "System.Single").invoke(texture, rect.unbox(), pivot.unbox(), params.pixelsPerUnit);
-    }
-    function getOrCreateSprite(cacheKey, imagePath, templateSprite) {
-      let sprite = spriteCache.get(cacheKey);
-      if (!sprite) {
-        sprite = createCustomSprite(imagePath, templateSprite);
-        spriteCache.set(cacheKey, sprite);
-      }
-      return sprite;
-    }
-    function loadSpriteSet(prefix, paths, templates) {
-      return {
-        click: getOrCreateSprite(`${prefix}:click:${paths.click}`, paths.click, templates.click),
-        drag: getOrCreateSprite(`${prefix}:drag:${paths.drag}`, paths.drag, templates.drag),
-        flick: getOrCreateSprite(`${prefix}:flick:${paths.flick}`, paths.flick, templates.flick),
-        holdHead: getOrCreateSprite(`${prefix}:holdHead:${paths.holdHead}`, paths.holdHead, templates.holdHead),
-        holdBody: getOrCreateSprite(`${prefix}:holdBody:${paths.holdBody}`, paths.holdBody, templates.holdBody),
-        holdEnd: getOrCreateSprite(`${prefix}:holdEnd:${paths.holdEnd}`, paths.holdEnd, templates.holdEnd)
-      };
-    }
-    function getComponent(gameObject, componentClass) {
-      const component = gameObject.method("GetComponent").overload("System.Type").invoke(componentClass.type.object);
-      if (!component || component.isNull?.()) {
-        throw new Error(`GetComponent failed: ${componentClass.type.name}`);
-      }
-      return component;
-    }
-    function sameObject(a, b) {
-      if (!a || !b) {
-        return false;
-      }
-      const aHandle = a.handle ?? a;
-      const bHandle = b.handle ?? b;
-      if (!aHandle || !bHandle) {
-        return false;
-      }
-      if (typeof aHandle.equals === "function") {
-        return aHandle.equals(bHandle);
-      }
-      return aHandle.toString() === bHandle.toString();
-    }
-    function replacePrefabNoteImage(gameObject, componentClass, sprite) {
-      const component = getComponent(gameObject, componentClass);
-      component.field("noteImage").value = sprite;
-    }
-    function applyHoldNoteImages(noteImages, sprites) {
-      if (!noteImages || noteImages.isNull?.()) {
-        throw new Error("HoldControl.noteImages is null");
-      }
-      if (noteImages.length < 3) {
-        throw new Error(`HoldControl.noteImages length=${noteImages.length}, expected >=3`);
-      }
-      noteImages.set(0, sprites.holdHead);
-      noteImages.set(1, sprites.holdBody);
-      if (sprites.holdEnd) {
-        noteImages.set(2, sprites.holdEnd);
-      }
-    }
-    function replaceHoldPrefabNoteImages(gameObject, holdControlClass, sprites) {
-      const component = getComponent(gameObject, holdControlClass);
-      const noteImages = component.field("noteImages").value;
-      applyHoldNoteImages(noteImages, sprites);
-      component.field("noteImages").value = noteImages;
-    }
-    function getHoldPrefabImages(levelControl, holdControlClass) {
-      const holdPrefab = levelControl.field("Hold").value;
-      const holdComponent = getComponent(holdPrefab, holdControlClass);
-      return holdComponent.field("noteImages").value;
-    }
-    function collectTemplateSprites(levelControl, clickControl, dragControl, flickControl, holdControlClass) {
-      const clickNormal = getComponent(levelControl.field("Click").value, clickControl).field("noteImage").value;
-      const dragNormal = getComponent(levelControl.field("Drag").value, dragControl).field("noteImage").value;
-      const flickNormal = getComponent(levelControl.field("Flick").value, flickControl).field("noteImage").value;
-      const holdImages = getHoldPrefabImages(levelControl, holdControlClass);
-      if (!holdImages || holdImages.isNull?.() || holdImages.length < 3) {
-        throw new Error("Hold prefab noteImages is invalid");
-      }
-      const holdEndShared = holdImages.get(2);
-      return {
-        normal: {
-          click: clickNormal,
-          drag: dragNormal,
-          flick: flickNormal,
-          holdHead: holdImages.get(0),
-          holdBody: holdImages.get(1),
-          holdEnd: holdEndShared
-        },
-        multi: {
-          click: levelControl.field("ClickHL").value,
-          drag: levelControl.field("DragHL").value,
-          flick: levelControl.field("FlickHL").value,
-          holdHead: levelControl.field("HoldHL0").value,
-          holdBody: levelControl.field("HoldHL1").value,
-          holdEnd: holdEndShared
-        }
-      };
-    }
-    function applyToLevelControl(levelControl, sprites, clickControl, dragControl, flickControl, holdControlClass) {
-      levelControl.field("ClickHL").value = sprites.multi.click;
-      levelControl.field("HoldHL0").value = sprites.multi.holdHead;
-      levelControl.field("HoldHL1").value = sprites.multi.holdBody;
-      levelControl.field("DragHL").value = sprites.multi.drag;
-      levelControl.field("FlickHL").value = sprites.multi.flick;
-      replacePrefabNoteImage(levelControl.field("Click").value, clickControl, sprites.normal.click);
-      replacePrefabNoteImage(levelControl.field("Drag").value, dragControl, sprites.normal.drag);
-      replacePrefabNoteImage(levelControl.field("Flick").value, flickControl, sprites.normal.flick);
-      replaceHoldPrefabNoteImages(levelControl.field("Hold").value, holdControlClass, sprites.normal);
-      const holdComponent = getComponent(levelControl.field("Hold").value, holdControlClass);
-      const disableTail = Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE;
-      try {
-        const tailGo = holdComponent.field("holdEnd").value;
-        if (tailGo && !tailGo.isNull?.()) {
-          tailGo.method("SetActive").overload("System.Boolean").invoke(!disableTail);
-        }
-      } catch {
-      }
-      try {
-        const tailRenderer = holdComponent.field("_holdEndSpriteRenderer1").value;
-        if (tailRenderer && !tailRenderer.isNull?.()) {
-          tailRenderer.method("set_enabled").overload("System.Boolean").invoke(!disableTail);
-        }
-      } catch {
-      }
-    }
-    function resolveTailModeSprites(templates) {
-      const normal = loadSpriteSet("normal", NOTE_TEXTURES.normal, templates.normal);
-      const multiBasePaths = {
-        ...NOTE_TEXTURES.multi,
-        holdEnd: NOTE_TEXTURES.normal.holdEnd
-      };
-      const multi = loadSpriteSet("multi", multiBasePaths, templates.multi);
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        multi.holdEnd = normal.holdEnd;
-        return { normal, multi };
-      }
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SHARED) {
-        multi.holdEnd = normal.holdEnd;
-        return { normal, multi };
-      }
-      try {
-        multi.holdEnd = getOrCreateSprite(`multi:holdEndSeparate:${NOTE_TEXTURES.multi.holdEnd}`, NOTE_TEXTURES.multi.holdEnd, templates.multi.holdEnd);
-      } catch (e) {
-        multi.holdEnd = normal.holdEnd;
-        console.log(`[note-texture] separate multi hold tail load failed, fallback to shared tail: ${e}`);
-      }
-      return { normal, multi };
-    }
-    function syncMultiHoldTailOnce(instance, sprites) {
-      const key = instance.handle?.toString?.() ?? "";
-      if (!key || processedHolds.has(key)) {
-        return;
-      }
-      const noteImages = instance.field("noteImages").value;
-      if (!noteImages || noteImages.isNull?.() || noteImages.length < 3) {
-        return;
-      }
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        const endRenderer2 = instance.field("_holdEndSpriteRenderer1").value;
-        if (endRenderer2 && !endRenderer2.isNull?.()) {
-          endRenderer2.method("set_enabled").overload("System.Boolean").invoke(false);
-        }
-        processedHolds.add(key);
-        return;
-      }
-      let judgeLineReady = false;
-      let isMultiHead = false;
-      try {
-        const judgeLine = instance.field("judgeLine").value;
-        if (judgeLine && !judgeLine.isNull?.()) {
-          const jlHoldHL0 = judgeLine.field("HoldHL0").value;
-          const jlHoldHL1 = judgeLine.field("HoldHL1").value;
-          const hasHL0 = !!jlHoldHL0 && !jlHoldHL0.isNull?.();
-          const hasHL1 = !!jlHoldHL1 && !jlHoldHL1.isNull?.();
-          if (hasHL0 || hasHL1) {
-            judgeLineReady = true;
-            isMultiHead = hasHL0 && sameObject(noteImages.get(0), jlHoldHL0) || hasHL1 && sameObject(noteImages.get(1), jlHoldHL1);
-          }
-        }
-      } catch {
-      }
-      if (!judgeLineReady) {
-        isMultiHead = sameObject(noteImages.get(0), sprites.multi.holdHead) || sameObject(noteImages.get(1), sprites.multi.holdBody);
-        const looksNormal = sameObject(noteImages.get(0), sprites.normal.holdHead) || sameObject(noteImages.get(1), sprites.normal.holdBody);
-        if (!isMultiHead && !looksNormal) {
-          return;
-        }
-        if (!isMultiHead && looksNormal) {
-          processedHolds.add(key);
-          if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
-            loggedHolds.add(key);
-            console.log(`[note-texture] mode3 hold normal(no tail patch) key=${key}`);
-          }
-          return;
-        }
-      } else if (!isMultiHead) {
-        processedHolds.add(key);
-        if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
-          loggedHolds.add(key);
-          console.log(`[note-texture] mode3 hold normal(by judgeLine) key=${key}`);
-        }
-        return;
-      }
-      if (sprites.multi.holdEnd) {
-        noteImages.set(2, sprites.multi.holdEnd);
-      }
-      instance.field("noteImages").value = noteImages;
-      try {
-        const holdEnd = instance.field("holdEnd").value;
-        if (holdEnd && !holdEnd.isNull?.()) {
-          holdEnd.method("SetActive").overload("System.Boolean").invoke(true);
-        }
-      } catch {
-      }
-      const endRenderer = instance.field("_holdEndSpriteRenderer1").value;
-      if (endRenderer && !endRenderer.isNull?.() && sprites.multi.holdEnd) {
-        endRenderer.method("set_enabled").overload("System.Boolean").invoke(true);
-        endRenderer.method("set_sprite").overload("UnityEngine.Sprite").invoke(sprites.multi.holdEnd);
-      }
-      processedHolds.add(key);
-      if (LOG_MODE3_HOLD_TAIL && !loggedHolds.has(key)) {
-        loggedHolds.add(key);
-        console.log(`[note-texture] mode3 hold multi tail patched key=${key}`);
-      }
-    }
-    function tryGetParentLevelControl(uiChange, levelControlClass) {
-      const transform = uiChange.method("get_transform").invoke();
-      if (!transform || transform.isNull?.()) {
-        return null;
-      }
-      const parent = transform.method("get_parent").invoke();
-      if (!parent || parent.isNull?.()) {
-        return null;
-      }
-      const parentGameObject = parent.method("get_gameObject").invoke();
-      if (!parentGameObject || parentGameObject.isNull?.()) {
-        return null;
-      }
-      const levelControl = parentGameObject.method("GetComponent").overload("System.Type").invoke(levelControlClass.type.object);
-      if (!levelControl || levelControl.isNull?.()) {
-        return null;
-      }
-      return levelControl;
-    }
+    var HOOK_OFFSET = 3016;
+    var EXPECTED_PATTERN = [232, 26, 64, 185, 31, 5, 0, 113];
     Il2Cpp.perform(() => {
-      const AssemblyCSharp = Il2Cpp.domain.assembly("Assembly-CSharp").image;
-      const LevelControl = AssemblyCSharp.class("LevelControl");
-      const ClickControl = AssemblyCSharp.class("ClickControl");
-      const DragControl = AssemblyCSharp.class("DragControl");
-      const FlickControl = AssemblyCSharp.class("FlickControl");
-      const HoldControl = AssemblyCSharp.class("HoldControl");
-      const UiChange = AssemblyCSharp.tryClass("UiChange");
-      let loadedSprites = null;
-      const ensureLoadedSprites = (levelControl) => {
-        if (loadedSprites) {
-          return loadedSprites;
-        }
-        const templates = collectTemplateSprites(levelControl, ClickControl, DragControl, FlickControl, HoldControl);
-        loadedSprites = resolveTailModeSprites(templates);
-        return loadedSprites;
-      };
-      if (Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_SEPARATE || Number(HOLD_TAIL_MODE) === HOLD_TAIL_MODE_NONE) {
-        console.log(`[note-texture] HoldControl.NoteMove hook enabled for tail mode=${HOLD_TAIL_MODE}`);
-        HoldControl.method("NoteMove", 0).implementation = function() {
-          this.method("NoteMove").invoke();
-          try {
-            if (!loadedSprites) {
-              return;
-            }
-            syncMultiHoldTailOnce(this, loadedSprites);
-          } catch (e) {
-            console.log(`[note-texture] failed multi hold tail sync: ${e}`);
-          }
-        };
+      const asm = Il2Cpp.domain.assembly("Assembly-CSharp").image;
+      const JudgeLineControl = asm.class("JudgeLineControl");
+      const HoldControl = asm.class("HoldControl");
+      const createNote = JudgeLineControl.method("CreateNote", 2);
+      const createNoteBase = createNote.virtualAddress;
+      const hookAddr = createNoteBase.add(HOOK_OFFSET);
+      console.log(`[verify] CreateNote base     = ${createNoteBase}`);
+      console.log(`[verify] Hook target address  = ${hookAddr}`);
+      const patternAddr = hookAddr.sub(12);
+      const actual = patternAddr.readByteArray(8);
+      if (actual === null) {
+        console.log(`[verify] FAIL: cannot read bytes at ${patternAddr}`);
+        return;
       }
-      LevelControl.method("Awake", 0).implementation = function() {
-        this.method("Awake").invoke();
-        try {
-          const sprites = ensureLoadedSprites(this);
-          applyToLevelControl(this, sprites, ClickControl, DragControl, FlickControl, HoldControl);
-          console.log("[note-texture] reapplied textures at LevelControl.Awake");
-        } catch (e) {
-          console.log(`[note-texture] failed apply at LevelControl.Awake: ${e}`);
+      const actualBytes = new Uint8Array(actual);
+      let patternMatch = true;
+      for (let i = 0; i < EXPECTED_PATTERN.length; i++) {
+        if (actualBytes[i] !== EXPECTED_PATTERN[i]) {
+          patternMatch = false;
+          break;
         }
-      };
-      if (UiChange) {
-        UiChange.method("OnEnable", 0).implementation = function() {
-          this.method("OnEnable").invoke();
-          try {
-            const levelControl = tryGetParentLevelControl(this, LevelControl);
-            if (!levelControl) {
-              return;
-            }
-            const sprites = ensureLoadedSprites(levelControl);
-            applyToLevelControl(levelControl, sprites, ClickControl, DragControl, FlickControl, HoldControl);
-            console.log("[note-texture] reapplied textures after UiChange.OnEnable");
-          } catch (e) {
-            console.log(`[note-texture] failed apply after UiChange.OnEnable: ${e}`);
-          }
-        };
       }
-      console.log(`[note-texture] hook installed at LevelControl.Awake + UiChange.OnEnable (tail mode=${HOLD_TAIL_MODE})`);
+      if (!patternMatch) {
+        console.log(`[verify] FAIL: byte pattern mismatch at ${patternAddr}`);
+        console.log(`[verify]   expected: ${EXPECTED_PATTERN.map((b) => b.toString(16).padStart(2, "0")).join(" ")}`);
+        console.log(`[verify]   actual:   ${Array.from(actualBytes).map((b) => b.toString(16).padStart(2, "0")).join(" ")}`);
+        console.log(`[verify] Aborting \u2014 binary may have changed.`);
+        return;
+      }
+      console.log(`[verify] Pattern OK \u2014 confirmed STR X20,[X23,#0x28] at hook address.`);
+      const holdHL0Offset = JudgeLineControl.field("HoldHL0").offset;
+      const holdHL1Offset = JudgeLineControl.field("HoldHL1").offset;
+      const noteImagesOffset = HoldControl.field("noteImages").offset;
+      console.log(`[verify] JudgeLineControl.HoldHL0 offset = 0x${holdHL0Offset.toString(16)}`);
+      console.log(`[verify] JudgeLineControl.HoldHL1 offset = 0x${holdHL1Offset.toString(16)}`);
+      console.log(`[verify] HoldControl.noteImages offset   = 0x${noteImagesOffset.toString(16)}`);
+      let totalCreateNoteCalls = 0;
+      let holdCaseCalls = 0;
+      let inlineHitCount = 0;
+      const MAX_LOG = 10;
+      Interceptor.attach(hookAddr, {
+        onEnter() {
+          inlineHitCount++;
+          holdCaseCalls++;
+          if (inlineHitCount > MAX_LOG)
+            return;
+          const x23 = this.context.x23;
+          const x20 = this.context.x20;
+          const x19 = this.context.x19;
+          const x22 = this.context.x22;
+          const arrLen = x23.add(24).readU32();
+          const elem0 = x23.add(32).readPointer();
+          const elem1 = x23.add(40).readPointer();
+          const elem2 = x23.add(48).readPointer();
+          const hl0 = x19.add(holdHL0Offset).readPointer();
+          const hl1 = x19.add(holdHL1Offset).readPointer();
+          const noteImagesFromHold = x22.add(noteImagesOffset).readPointer();
+          console.log(`
+[verify] === Inline hook hit #${inlineHitCount} ===`);
+          console.log(`[verify]   X19 (JudgeLineControl) = ${x19}`);
+          console.log(`[verify]   X22 (HoldControl)      = ${x22}`);
+          console.log(`[verify]   X23 (noteImages)       = ${x23}`);
+          console.log(`[verify]   X20 (HoldHL1)          = ${x20}`);
+          console.log(`[verify]   noteImages from X22+0x${noteImagesOffset.toString(16)} = ${noteImagesFromHold}`);
+          console.log(`[verify]   X23 == noteImagesFromHold? ${x23.equals(noteImagesFromHold)}`);
+          console.log(`[verify]   array length = ${arrLen}`);
+          console.log(`[verify]   noteImages[0] = ${elem0} (head)`);
+          console.log(`[verify]   noteImages[1] = ${elem1} (body, BEFORE native write)`);
+          console.log(`[verify]   noteImages[2] = ${elem2} (tail \u2014 target for our write)`);
+          console.log(`[verify]   JudgeLineControl.HoldHL0 = ${hl0}`);
+          console.log(`[verify]   JudgeLineControl.HoldHL1 = ${hl1}`);
+          console.log(`[verify]   elem0 == HoldHL0? ${elem0.equals(hl0)} (head already HL-patched)`);
+          console.log(`[verify]   X20 == HoldHL1? ${x20.equals(hl1)} (confirms X20 is body-HL sprite)`);
+          console.log(`[verify]   noteImages[2] writable? attempting read-back test...`);
+          const originalTail = elem2;
+          x23.add(48).writePointer(originalTail);
+          const readBack = x23.add(48).readPointer();
+          console.log(`[verify]   write-readback OK? ${readBack.equals(originalTail)}`);
+          if (inlineHitCount === MAX_LOG) {
+            console.log(`[verify] (suppressing further logs, will report totals on detach)`);
+          }
+        }
+      });
+      console.log(`[verify] Inline hook installed at ${hookAddr}`);
+      console.log(`[verify] Play a chart with multi-press (HL) holds to trigger.`);
+      console.log(`[verify] First ${MAX_LOG} hits will be logged in detail.
+`);
+      const timer = setInterval(() => {
+        if (inlineHitCount > 0) {
+          console.log(`[verify] --- Summary: inline hook fired ${inlineHitCount} times (HL holds) ---`);
+        }
+      }, 5e3);
+      Script.bindWeak(globalThis, () => {
+        clearInterval(timer);
+        console.log(`[verify] Final: inline hook fired ${inlineHitCount} times total.`);
+      });
     });
   }
 });
-require_note_texture_replace_bridge_changed();
+require_verify_inline_hook();

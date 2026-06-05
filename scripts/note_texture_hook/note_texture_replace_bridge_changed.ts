@@ -29,7 +29,7 @@ const HOLD_TAIL_MODE_SEPARATE: HoldTailMode = 3;
 // 1: do not use hold tail
 // 2: normal/multi share hold_end.png
 // 3: normal/multi use different hold tail sprites
-let HOLD_TAIL_MODE: HoldTailMode = HOLD_TAIL_MODE_SEPARATE;
+let HOLD_TAIL_MODE: HoldTailMode = HOLD_TAIL_MODE_NONE;
 
 const NOTE_TEXTURES: { normal: NoteSpritePathSet; multi: NoteSpritePathSet } = {
     normal: {
